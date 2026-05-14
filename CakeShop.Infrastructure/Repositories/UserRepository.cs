@@ -1,5 +1,5 @@
-using CakeShop.Core.Interfaces;
-using CakeShop.Core.Models;
+﻿using CakeShop.Core.Interfaces;
+using EC.Entities.Models;
 using CakeShop.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,4 +1,4 @@
-namespace CakeShop.Core.Models;
+﻿namespace EC.Entities.Models;
 
 public class User
 {

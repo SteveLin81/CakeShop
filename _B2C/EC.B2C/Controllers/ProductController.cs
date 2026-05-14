@@ -1,8 +1,8 @@
-using CakeShop.Core.DTOs;
+﻿using CakeShop.Core.DTOs;
 using CakeShop.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CakeShop.Api.Controllers;
+namespace EC.B2C.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

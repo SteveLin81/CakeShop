@@ -1,8 +1,8 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using CakeShop.Core.Interfaces;
 
-namespace CakeShop.Business.Services;
+namespace EC.CommonService.Services;
 
 public class EncryptionService : IEncryptionService
 {

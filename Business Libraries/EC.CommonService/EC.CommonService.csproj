@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>EC.CommonService</RootNamespace>
+    <AssemblyName>EC.CommonService</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\CakeShop.Core\CakeShop.Core.csproj" />
+    <ProjectReference Include="..\..\Framework\EC.Entities\EC.Entities.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>EC.B2C</RootNamespace>
+    <AssemblyName>EC.B2C</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,9 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CakeShop.Core\CakeShop.Core.csproj" />
-    <ProjectReference Include="..\CakeShop.Business\CakeShop.Business.csproj" />
-    <ProjectReference Include="..\CakeShop.Infrastructure\CakeShop.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\CakeShop.Core\CakeShop.Core.csproj" />
+    <ProjectReference Include="..\..\Business Libraries\EC.CommonService\EC.CommonService.csproj" />
+    <ProjectReference Include="..\..\CakeShop.Infrastructure\CakeShop.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Framework\EC.Entities\EC.Entities.csproj" />
   </ItemGroup>
 
 </Project>

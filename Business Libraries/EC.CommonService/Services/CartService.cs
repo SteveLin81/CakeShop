@@ -1,8 +1,8 @@
-using CakeShop.Core.DTOs;
+﻿using CakeShop.Core.DTOs;
 using CakeShop.Core.Interfaces;
-using CakeShop.Core.Models;
+using EC.Entities.Models;
 
-namespace CakeShop.Business.Services;
+namespace EC.CommonService.Services;
 
 public class CartService : ICartService
 {

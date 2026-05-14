@@ -1,4 +1,4 @@
-using CakeShop.Core.Models;
+﻿using EC.Entities.Models;
 
 namespace CakeShop.Core.Interfaces;
 

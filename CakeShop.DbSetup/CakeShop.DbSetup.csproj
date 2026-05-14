@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CakeShop.Business\CakeShop.Business.csproj" />
+    <ProjectReference Include="..\Business Libraries\EC.CommonService\EC.CommonService.csproj" />
   </ItemGroup>
 
 </Project>

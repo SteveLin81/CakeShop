@@ -1,7 +1,7 @@
-using CakeShop.Core.DTOs;
+﻿using CakeShop.Core.DTOs;
 using CakeShop.Core.Interfaces;
 
-namespace CakeShop.Business.Services;
+namespace EC.CommonService.Services;
 
 public class AuthService : IAuthService
 {
