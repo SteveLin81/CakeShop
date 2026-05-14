@@ -411,7 +411,15 @@ const app = createApp({
     const announcementVisible = ref(false);
     const announcementContent = computed(() => {
       if (!announcement.value) return '';
-      const map = { 'en': announcement.value.contentEn, 'ja': announcement.value.contentJa, 'zh-CN': announcement.value.contentZhCn };
+      const map = {
+        'en':    announcement.value.contentEn,
+        'ja':    announcement.value.contentJa,
+        'zh-CN': announcement.value.contentZhCn,
+        'th':    announcement.value.contentTh,
+        'ko':    announcement.value.contentKo,
+        'vi':    announcement.value.contentVi,
+        'ms':    announcement.value.contentMs,
+      };
       return map[locale.value] || announcement.value.content;
     });
     function dismissAnnouncement() {
