@@ -59,24 +59,18 @@ function getSessionId() {
 
 // 依語言取得產品名稱
 function getProductName(p, locale) {
-  if (locale === 'en') return p.nameEn || p.name;
-  if (locale === 'ja') return p.nameJa || p.name;
-  if (locale === 'zh-CN') return p.nameZhCn || p.name;
-  return p.name;
+  const m = { en: p.nameEn, ja: p.nameJa, 'zh-CN': p.nameZhCn, th: p.nameTh, ko: p.nameKo, vi: p.nameVi, ms: p.nameMs };
+  return m[locale] || p.name;
 }
 
 // 依語言取得分類名稱
 function getCategoryName(c, locale) {
-  if (locale === 'en') return c.nameEn || c.name;
-  if (locale === 'ja') return c.nameJa || c.name;
-  if (locale === 'zh-CN') return c.nameZhCn || c.name;
-  return c.name;
+  const m = { en: c.nameEn, ja: c.nameJa, 'zh-CN': c.nameZhCn, th: c.nameTh, ko: c.nameKo, vi: c.nameVi, ms: c.nameMs };
+  return m[locale] || c.name;
 }
 
 // 依語言取得產品描述
 function getProductDesc(p, locale) {
-  if (locale === 'en') return p.descriptionEn || p.description;
-  if (locale === 'ja') return p.descriptionJa || p.description;
-  if (locale === 'zh-CN') return p.descriptionZhCn || p.description;
-  return p.description;
+  const m = { en: p.descriptionEn, ja: p.descriptionJa, 'zh-CN': p.descriptionZhCn, th: p.descriptionTh, ko: p.descriptionKo, vi: p.descriptionVi, ms: p.descriptionMs };
+  return m[locale] || p.description;
 }

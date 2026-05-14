@@ -229,5 +229,182 @@ const messages = {
       usernameReq: '请输入账号', passwordReq: '请输入密码'
     },
     common: { currency: 'NT$', loading: '加载中...', error: '发生错误，请稍后再试', close: '关闭' }
+  },
+
+  'th': {
+    nav: {
+      home: 'หน้าแรก', products: 'สินค้า', contact: 'ติดต่อเรา',
+      login: 'เข้าสู่ระบบ', logout: 'ออกจากระบบ', cart: 'ตะกร้า',
+      welcome: 'ยินดีต้อนรับ', langLabel: 'ภาษาไทย'
+    },
+    home: {
+      heroTitle: 'สวีทเบคส์', heroSubtitle: 'ทุกคำคือผลงานศิลปะ',
+      heroBtn: 'ดูสินค้า', featuredTitle: 'เค้กแนะนำ',
+      featuredSubtitle: 'วัตถุดิบคัดสรร ทำด้วยมือ',
+      f1Title: 'วัตถุดิบสด', f1Desc: 'คัดสรรวัตถุดิบสดใหม่ทุกวัน',
+      f2Title: 'ทำด้วยมือ', f2Desc: 'ผลิตโดยเชฟขนมผู้เชี่ยวชาญ',
+      f3Title: 'ส่งไว', f3Desc: 'บรรจุพิเศษเพื่อความสดใหม่',
+      viewAll: 'ดูทั้งหมด', carouselTitle: 'เค้กแนะนำ', carouselTag: 'HOT PICKS', announceDismiss: 'ปิด'
+    },
+    products: {
+      title: 'เค้กทั้งหมด', all: 'ทั้งหมด',
+      search: 'ค้นหาเค้ก...', noResult: 'ไม่พบเค้กที่ต้องการ',
+      addToCart: 'เพิ่มในตะกร้า', details: 'รายละเอียด', perSlice: '/ ชิ้น'
+    },
+    cart: {
+      title: 'ตะกร้าสินค้า', empty: 'ตะกร้าว่างเปล่า',
+      total: 'รวม', checkout: 'ชำระเงิน',
+      remove: 'ลบ', clear: 'ล้างตะกร้า', qty: 'จำนวน', subtotal: 'ยอดรวม',
+      added: 'เพิ่มในตะกร้าแล้ว', updated: 'อัปเดตจำนวนแล้ว', itemCount: 'รายการ'
+    },
+    contact: {
+      title: 'ติดต่อเรา', subtitle: 'หากมีคำถาม โปรดติดต่อเรา',
+      name: 'ชื่อ', email: 'อีเมล', subject: 'หัวข้อ', message: 'ข้อความ',
+      send: 'ส่งข้อความ',
+      success: 'ส่งข้อความสำเร็จแล้ว เราจะตอบกลับภายใน 1-2 วันทำการ',
+      nameReq: 'กรุณากรอกชื่อ', emailReq: 'กรุณากรอกอีเมล',
+      emailInvalid: 'กรุณากรอกอีเมลที่ถูกต้อง',
+      subjectReq: 'กรุณากรอกหัวข้อ', messageReq: 'กรุณากรอกข้อความ',
+      infoTitle: 'ข้อมูลติดต่อ', address: 'เลขที่ 1 ถนนซินอี้ แขวงต้าอัน ไทเป',
+      phone: '+886-2-2345-6789', hours: 'จันทร์-อาทิตย์ 09:00–21:00', email2: 'hello@sweetbakes.tw'
+    },
+    auth: {
+      loginTitle: 'เข้าสู่ระบบ', username: 'ชื่อผู้ใช้', password: 'รหัสผ่าน', login: 'เข้าสู่ระบบ',
+      loginSuccess: 'เข้าสู่ระบบสำเร็จ!', loginFailed: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+      logoutSuccess: 'ออกจากระบบแล้ว', usernameReq: 'กรุณากรอกชื่อผู้ใช้', passwordReq: 'กรุณากรอกรหัสผ่าน'
+    },
+    common: { currency: 'NT$', loading: 'กำลังโหลด...', error: 'เกิดข้อผิดพลาด โปรดลองใหม่', close: 'ปิด' }
+  },
+
+  'ko': {
+    nav: {
+      home: '홈', products: '상품', contact: '문의',
+      login: '로그인', logout: '로그아웃', cart: '장바구니',
+      welcome: '환영합니다', langLabel: '한국어'
+    },
+    home: {
+      heroTitle: '스위트 베이크스', heroSubtitle: '한 입 한 입이 예술입니다',
+      heroBtn: '케이크 보기', featuredTitle: '추천 케이크',
+      featuredSubtitle: '엄선한 재료, 장인 손수 제작',
+      f1Title: '신선한 재료', f1Desc: '매일 엄선한 신선한 재료 사용',
+      f2Title: '수제', f2Desc: '숙련된 파티시에가 직접 제작',
+      f3Title: '빠른 배송', f3Desc: '특수 포장으로 신선도 유지',
+      viewAll: '전체 보기', carouselTitle: '추천 케이크', carouselTag: 'HOT PICKS', announceDismiss: '닫기'
+    },
+    products: {
+      title: '전체 케이크', all: '전체',
+      search: '케이크 검색...', noResult: '케이크를 찾을 수 없습니다',
+      addToCart: '장바구니 추가', details: '상세', perSlice: '/ 조각'
+    },
+    cart: {
+      title: '장바구니', empty: '장바구니가 비어 있습니다',
+      total: '합계', checkout: '결제', remove: '삭제', clear: '장바구니 비우기',
+      qty: '수량', subtotal: '소계', added: '장바구니에 추가됨', updated: '수량 업데이트됨', itemCount: '개 상품'
+    },
+    contact: {
+      title: '문의하기', subtitle: '궁금한 점이 있으시면 언제든지 문의해 주세요',
+      name: '이름', email: '이메일', subject: '제목', message: '메시지',
+      send: '메시지 보내기',
+      success: '메시지가 전송되었습니다. 1-2 영업일 내에 답변 드리겠습니다.',
+      nameReq: '이름을 입력해 주세요', emailReq: '이메일을 입력해 주세요',
+      emailInvalid: '유효한 이메일을 입력해 주세요',
+      subjectReq: '제목을 입력해 주세요', messageReq: '메시지를 입력해 주세요',
+      infoTitle: '연락처 정보', address: '대만 타이베이시 다안구 신이로 4단 1호',
+      phone: '+886-2-2345-6789', hours: '월-일 09:00–21:00', email2: 'hello@sweetbakes.tw'
+    },
+    auth: {
+      loginTitle: '로그인', username: '아이디', password: '비밀번호', login: '로그인',
+      loginSuccess: '로그인 성공!', loginFailed: '아이디 또는 비밀번호가 올바르지 않습니다',
+      logoutSuccess: '로그아웃 되었습니다', usernameReq: '아이디를 입력해 주세요', passwordReq: '비밀번호를 입력해 주세요'
+    },
+    common: { currency: 'NT$', loading: '로딩 중...', error: '오류가 발생했습니다. 다시 시도해 주세요', close: '닫기' }
+  },
+
+  'vi': {
+    nav: {
+      home: 'Trang Chủ', products: 'Sản Phẩm', contact: 'Liên Hệ',
+      login: 'Đăng Nhập', logout: 'Đăng Xuất', cart: 'Giỏ Hàng',
+      welcome: 'Chào Mừng', langLabel: 'Tiếng Việt'
+    },
+    home: {
+      heroTitle: 'Sweet Bakes', heroSubtitle: 'Mỗi miếng là một tác phẩm nghệ thuật',
+      heroBtn: 'Khám Phá', featuredTitle: 'Bánh Nổi Bật',
+      featuredSubtitle: 'Nguyên liệu tuyển chọn, thủ công tinh tế',
+      f1Title: 'Nguyên Liệu Tươi', f1Desc: 'Chọn lọc nguyên liệu tươi ngon mỗi ngày',
+      f2Title: 'Thủ Công', f2Desc: 'Được làm bởi thợ bánh chuyên nghiệp',
+      f3Title: 'Giao Nhanh', f3Desc: 'Đóng gói đặc biệt giữ bánh luôn tươi',
+      viewAll: 'Xem Tất Cả', carouselTitle: 'Bánh Nổi Bật', carouselTag: 'HOT PICKS', announceDismiss: 'Đóng'
+    },
+    products: {
+      title: 'Tất Cả Bánh', all: 'Tất Cả',
+      search: 'Tìm kiếm bánh...', noResult: 'Không tìm thấy bánh',
+      addToCart: 'Thêm Vào Giỏ', details: 'Chi Tiết', perSlice: '/ miếng'
+    },
+    cart: {
+      title: 'Giỏ Hàng', empty: 'Giỏ hàng trống',
+      total: 'Tổng', checkout: 'Thanh Toán', remove: 'Xoá', clear: 'Xoá Giỏ Hàng',
+      qty: 'Số Lượng', subtotal: 'Tạm Tính', added: 'Đã thêm vào giỏ', updated: 'Đã cập nhật số lượng', itemCount: 'sản phẩm'
+    },
+    contact: {
+      title: 'Liên Hệ', subtitle: 'Liên hệ với chúng tôi nếu bạn có câu hỏi',
+      name: 'Họ Tên', email: 'Email', subject: 'Tiêu Đề', message: 'Nội Dung',
+      send: 'Gửi Tin Nhắn',
+      success: 'Tin nhắn đã được gửi! Chúng tôi sẽ phản hồi trong 1-2 ngày làm việc.',
+      nameReq: 'Vui lòng nhập họ tên', emailReq: 'Vui lòng nhập email',
+      emailInvalid: 'Email không hợp lệ',
+      subjectReq: 'Vui lòng nhập tiêu đề', messageReq: 'Vui lòng nhập nội dung',
+      infoTitle: 'Thông Tin Liên Hệ', address: 'Số 1, Đường Xinyi, Quận Da\'an, Đài Bắc',
+      phone: '+886-2-2345-6789', hours: 'Thứ 2 - CN 09:00–21:00', email2: 'hello@sweetbakes.tw'
+    },
+    auth: {
+      loginTitle: 'Đăng Nhập', username: 'Tên Đăng Nhập', password: 'Mật Khẩu', login: 'Đăng Nhập',
+      loginSuccess: 'Đăng nhập thành công!', loginFailed: 'Tên đăng nhập hoặc mật khẩu không đúng',
+      logoutSuccess: 'Đã đăng xuất', usernameReq: 'Vui lòng nhập tên đăng nhập', passwordReq: 'Vui lòng nhập mật khẩu'
+    },
+    common: { currency: 'NT$', loading: 'Đang tải...', error: 'Có lỗi xảy ra, vui lòng thử lại', close: 'Đóng' }
+  },
+
+  'ms': {
+    nav: {
+      home: 'Laman Utama', products: 'Produk', contact: 'Hubungi Kami',
+      login: 'Log Masuk', logout: 'Log Keluar', cart: 'Troli',
+      welcome: 'Selamat Datang', langLabel: 'Bahasa Melayu'
+    },
+    home: {
+      heroTitle: 'Sweet Bakes', heroSubtitle: 'Setiap gigitan adalah karya seni',
+      heroBtn: 'Terokai Kek', featuredTitle: 'Kek Pilihan',
+      featuredSubtitle: 'Bahan terpilih, buatan tangan berkualiti',
+      f1Title: 'Bahan Segar', f1Desc: 'Bahan tempatan segar dipilih setiap hari',
+      f2Title: 'Buatan Tangan', f2Desc: 'Dibuat oleh pembuat pastri berpengalaman',
+      f3Title: 'Penghantaran Cepat', f3Desc: 'Pembungkusan khas untuk kesegaran kek',
+      viewAll: 'Lihat Semua', carouselTitle: 'Kek Pilihan', carouselTag: 'HOT PICKS', announceDismiss: 'Tutup'
+    },
+    products: {
+      title: 'Semua Kek', all: 'Semua',
+      search: 'Cari kek...', noResult: 'Tiada kek dijumpai',
+      addToCart: 'Tambah ke Troli', details: 'Butiran', perSlice: '/ hirisan'
+    },
+    cart: {
+      title: 'Troli Belanja', empty: 'Troli kosong',
+      total: 'Jumlah', checkout: 'Daftar Keluar', remove: 'Buang', clear: 'Kosongkan Troli',
+      qty: 'Kuantiti', subtotal: 'Subjumlah', added: 'Ditambah ke troli', updated: 'Kuantiti dikemas kini', itemCount: 'item'
+    },
+    contact: {
+      title: 'Hubungi Kami', subtitle: 'Jangan ragu untuk menghubungi kami',
+      name: 'Nama', email: 'E-mel', subject: 'Subjek', message: 'Mesej',
+      send: 'Hantar Mesej',
+      success: 'Mesej berjaya dihantar! Kami akan membalas dalam 1-2 hari bekerja.',
+      nameReq: 'Sila masukkan nama', emailReq: 'Sila masukkan e-mel',
+      emailInvalid: 'Sila masukkan e-mel yang sah',
+      subjectReq: 'Sila masukkan subjek', messageReq: 'Sila masukkan mesej',
+      infoTitle: 'Maklumat Hubungan', address: 'No. 1, Seksyen 4, Jalan Xinyi, Daerah Da\'an, Taipei',
+      phone: '+886-2-2345-6789', hours: 'Isnin-Ahad 09:00–21:00', email2: 'hello@sweetbakes.tw'
+    },
+    auth: {
+      loginTitle: 'Log Masuk', username: 'Nama Pengguna', password: 'Kata Laluan', login: 'Log Masuk',
+      loginSuccess: 'Berjaya log masuk!', loginFailed: 'Nama pengguna atau kata laluan tidak sah',
+      logoutSuccess: 'Berjaya log keluar', usernameReq: 'Sila masukkan nama pengguna', passwordReq: 'Sila masukkan kata laluan'
+    },
+    common: { currency: 'NT$', loading: 'Memuatkan...', error: 'Ralat berlaku, sila cuba lagi', close: 'Tutup' }
   }
 };

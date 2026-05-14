@@ -8,6 +8,10 @@ public class CartItemDto
     public string ProductNameEn { get; set; } = string.Empty;
     public string ProductNameJa { get; set; } = string.Empty;
     public string ProductNameZhCn { get; set; } = string.Empty;
+    public string ProductNameTh { get; set; } = string.Empty;
+    public string ProductNameKo { get; set; } = string.Empty;
+    public string ProductNameVi { get; set; } = string.Empty;
+    public string ProductNameMs { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public decimal UnitPrice { get; set; }
     public int Quantity { get; set; }

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
@@ -325,7 +325,7 @@ createApp({
     function getDesc(p) { return getProductDesc(p, locale.value); }
     function getCatLabel(c) { return getCategoryName(c, locale.value); }
     function getCatNameFromProduct(p) {
-      const map = { 'en': p.categoryNameEn, 'ja': p.categoryNameJa, 'zh-CN': p.categoryNameZhCn };
+      const map = { 'en': p.categoryNameEn, 'ja': p.categoryNameJa, 'zh-CN': p.categoryNameZhCn, 'th': p.categoryNameTh, 'ko': p.categoryNameKo, 'vi': p.categoryNameVi, 'ms': p.categoryNameMs };
       return map[locale.value] || p.categoryName;
     }
 
@@ -336,7 +336,7 @@ createApp({
     const cartCount = computed(() => cartItems.value.reduce((s, i) => s + i.quantity, 0));
 
     function getCartItemName(item) {
-      const map = { 'en': item.productNameEn, 'ja': item.productNameJa, 'zh-CN': item.productNameZhCn };
+      const map = { 'en': item.productNameEn, 'ja': item.productNameJa, 'zh-CN': item.productNameZhCn, 'th': item.productNameTh, 'ko': item.productNameKo, 'vi': item.productNameVi, 'ms': item.productNameMs };
       return map[locale.value] || item.productName;
     }
     async function loadCart() {

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
@@ -355,7 +355,7 @@ createApp({
     const cartTotal = computed(() => cartItems.value.reduce((s, i) => s + i.subTotal, 0));
     const cartCount = computed(() => cartItems.value.reduce((s, i) => s + i.quantity, 0));
     function getCartItemName(item) {
-      const map = { 'en': item.productNameEn, 'ja': item.productNameJa, 'zh-CN': item.productNameZhCn };
+      const map = { 'en': item.productNameEn, 'ja': item.productNameJa, 'zh-CN': item.productNameZhCn, 'th': item.productNameTh, 'ko': item.productNameKo, 'vi': item.productNameVi, 'ms': item.productNameMs };
       return map[locale.value] || item.productName;
     }
     async function loadCart() {

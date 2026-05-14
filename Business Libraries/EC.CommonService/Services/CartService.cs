@@ -106,6 +106,10 @@ public class CartService : ICartService
         ProductNameEn = item.Product?.NameEn ?? string.Empty,
         ProductNameJa = item.Product?.NameJa ?? string.Empty,
         ProductNameZhCn = item.Product?.NameZhCn ?? string.Empty,
+        ProductNameTh = item.Product?.NameTh ?? string.Empty,
+        ProductNameKo = item.Product?.NameKo ?? string.Empty,
+        ProductNameVi = item.Product?.NameVi ?? string.Empty,
+        ProductNameMs = item.Product?.NameMs ?? string.Empty,
         ImageUrl = item.Product?.ImageUrl ?? string.Empty,
         UnitPrice = item.Product?.Price ?? 0,
         Quantity = item.Quantity

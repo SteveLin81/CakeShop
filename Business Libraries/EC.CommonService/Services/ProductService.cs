@@ -40,7 +40,11 @@ public class ProductService : IProductService
             Name = c.Name,
             NameEn = c.NameEn,
             NameJa = c.NameJa,
-            NameZhCn = c.NameZhCn
+            NameZhCn = c.NameZhCn,
+            NameTh = c.NameTh ?? string.Empty,
+            NameKo = c.NameKo ?? string.Empty,
+            NameVi = c.NameVi ?? string.Empty,
+            NameMs = c.NameMs ?? string.Empty
         });
     }
 
@@ -51,10 +55,18 @@ public class ProductService : IProductService
         NameEn = p.NameEn,
         NameJa = p.NameJa,
         NameZhCn = p.NameZhCn,
+        NameTh = p.NameTh ?? string.Empty,
+        NameKo = p.NameKo ?? string.Empty,
+        NameVi = p.NameVi ?? string.Empty,
+        NameMs = p.NameMs ?? string.Empty,
         Description = p.Description,
         DescriptionEn = p.DescriptionEn,
         DescriptionJa = p.DescriptionJa,
         DescriptionZhCn = p.DescriptionZhCn,
+        DescriptionTh = p.DescriptionTh ?? string.Empty,
+        DescriptionKo = p.DescriptionKo ?? string.Empty,
+        DescriptionVi = p.DescriptionVi ?? string.Empty,
+        DescriptionMs = p.DescriptionMs ?? string.Empty,
         Price = p.Price,
         ImageUrl = p.ImageUrl,
         CategoryId = p.CategoryId,
@@ -62,6 +74,10 @@ public class ProductService : IProductService
         CategoryNameEn = p.Category?.NameEn ?? string.Empty,
         CategoryNameJa = p.Category?.NameJa ?? string.Empty,
         CategoryNameZhCn = p.Category?.NameZhCn ?? string.Empty,
+        CategoryNameTh = p.Category?.NameTh ?? string.Empty,
+        CategoryNameKo = p.Category?.NameKo ?? string.Empty,
+        CategoryNameVi = p.Category?.NameVi ?? string.Empty,
+        CategoryNameMs = p.Category?.NameMs ?? string.Empty,
         IsAvailable = p.IsAvailable
     };
 }
