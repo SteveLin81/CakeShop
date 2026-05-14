@@ -179,16 +179,87 @@ dotnet run
 
 ### 資料表結構
 
-| 資料表 | 對應 Model | 說明 |
-|--------|-----------|------|
-| `categories` | `Category` | 商品分類（含 8 語系名稱：`name`, `name_en`, `name_ja`, `name_zh_cn`, `name_th`, `name_ko`, `name_vi`, `name_ms`） |
-| `products` | `Product` | 蛋糕商品（含 8 語系名稱與描述、分類外鍵） |
-| `users` | `User` | 使用者帳號（`password_hash` 以 SHA-256 儲存） |
-| `cart_items` | `CartItem` | 購物車（`session_id` 對應帳號名稱） |
-| `announcements` | `Announcement` | 置頂公告（含 8 語系內容，新語系欄位為 nullable，不存在時退回英文） |
+> 欄位命名規則：DB 使用 `snake_case`，C# Model 使用 `PascalCase`，由 `EFCore.NamingConventions` 自動對應。  
+> 新語系欄位（`_th` / `_ko` / `_vi` / `_ms`）以 `ALTER TABLE ADD COLUMN IF NOT EXISTS` 新增，可安全重複執行 `CakeShop.DbSetup`。
 
-> 欄位命名使用 `snake_case`（DB）對應 `PascalCase`（C# Model），由 `EFCore.NamingConventions` 套件自動轉換。  
-> 新增語系欄位可安全重複執行 `CakeShop.DbSetup`，內部使用 `ALTER TABLE ADD COLUMN IF NOT EXISTS`。
+#### categories
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| `id` | `SERIAL PK` | |
+| `name` | `VARCHAR(50)` | 繁體中文名稱 |
+| `name_en` | `VARCHAR(50)` | English |
+| `name_ja` | `VARCHAR(50)` | 日本語 |
+| `name_zh_cn` | `VARCHAR(50)` | 简体中文 |
+| `name_th` | `VARCHAR(50)` | ภาษาไทย |
+| `name_ko` | `VARCHAR(50)` | 한국어 |
+| `name_vi` | `VARCHAR(50)` | Tiếng Việt |
+| `name_ms` | `VARCHAR(50)` | Bahasa Melayu |
+
+#### products
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| `id` | `SERIAL PK` | |
+| `name` | `VARCHAR(100)` | 繁體中文名稱 |
+| `name_en` | `VARCHAR(100)` | English |
+| `name_ja` | `VARCHAR(100)` | 日本語 |
+| `name_zh_cn` | `VARCHAR(100)` | 简体中文 |
+| `name_th` | `VARCHAR(100)` | ภาษาไทย |
+| `name_ko` | `VARCHAR(100)` | 한국어 |
+| `name_vi` | `VARCHAR(100)` | Tiếng Việt |
+| `name_ms` | `VARCHAR(100)` | Bahasa Melayu |
+| `description` | `TEXT` | 繁體中文描述 |
+| `description_en` | `TEXT` | English |
+| `description_ja` | `TEXT` | 日本語 |
+| `description_zh_cn` | `TEXT` | 简体中文 |
+| `description_th` | `TEXT` | ภาษาไทย |
+| `description_ko` | `TEXT` | 한국어 |
+| `description_vi` | `TEXT` | Tiếng Việt |
+| `description_ms` | `TEXT` | Bahasa Melayu |
+| `price` | `NUMERIC(10,2)` | 售價（NT$） |
+| `image_url` | `VARCHAR(500)` | 商品圖片 URL |
+| `category_id` | `INTEGER FK` | 參照 `categories.id` |
+| `is_available` | `BOOLEAN` | 是否上架 |
+| `created_at` | `TIMESTAMPTZ` | |
+
+#### users
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| `id` | `SERIAL PK` | |
+| `username` | `VARCHAR(50) UNIQUE` | 帳號（唯一） |
+| `password_hash` | `VARCHAR(255)` | SHA-256(password + salt) → Base64 |
+| `email` | `VARCHAR(100)` | |
+| `created_at` | `TIMESTAMPTZ` | |
+
+#### cart_items
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| `id` | `SERIAL PK` | |
+| `session_id` | `VARCHAR(100)` | 對應登入帳號名稱（已登入才可操作） |
+| `product_id` | `INTEGER FK` | 參照 `products.id`（CASCADE DELETE） |
+| `quantity` | `INTEGER` | 數量（> 0） |
+| `created_at` | `TIMESTAMPTZ` | |
+| `updated_at` | `TIMESTAMPTZ` | |
+
+#### announcements
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| `id` | `SERIAL PK` | |
+| `content` | `TEXT` | 繁體中文公告 |
+| `content_en` | `TEXT` | English |
+| `content_ja` | `TEXT` | 日本語 |
+| `content_zh_cn` | `TEXT` | 简体中文 |
+| `content_th` | `TEXT` (nullable) | ภาษาไทย（為空時退回英文） |
+| `content_ko` | `TEXT` (nullable) | 한국어（為空時退回英文） |
+| `content_vi` | `TEXT` (nullable) | Tiếng Việt（為空時退回英文） |
+| `content_ms` | `TEXT` (nullable) | Bahasa Melayu（為空時退回英文） |
+| `is_active` | `BOOLEAN` | 是否啟用 |
+| `created_at` | `TIMESTAMPTZ` | |
+| `updated_at` | `TIMESTAMPTZ` | |
 
 ### EF Core Migrations
 
@@ -332,18 +403,20 @@ dotnet run
 
 ## 商品資料（儲存於 PostgreSQL）
 
-| # | 商品名稱 | 分類 | 價格 |
-|---|----------|------|------|
-| 1 | 巧克力熔岩蛋糕 | 巧克力 | NT$280 |
-| 2 | 草莓鮮奶油蛋糕 | 水果 | NT$350 |
-| 3 | 抹茶紅豆蛋糕 | 日式 | NT$320 |
-| 4 | 芒果慕斯蛋糕 | 水果 | NT$380 |
-| 5 | 藍莓起司蛋糕 | 起司 | NT$420 |
-| 6 | 黑森林蛋糕 | 巧克力 | NT$450 |
-| 7 | 提拉米蘇 | 經典 | NT$360 |
-| 8 | 紅絲絨蛋糕 | 經典 | NT$400 |
-| 9 | 檸檬磅蛋糕 | 柑橘 | NT$290 |
-| 10 | 焦糖蘋果塔 | 水果 | NT$340 |
+種子資料由 `CakeShop.DbSetup` 寫入，共 10 種蛋糕，每筆含 8 語系名稱與描述。
+
+| # | 繁中 | EN | 日本語 | 泰文 | 韓文 | 越南文 | 馬來文 | 分類 | NT$ |
+|---|------|----|--------|------|------|--------|--------|------|-----|
+| 1 | 巧克力熔岩蛋糕 | Chocolate Lava Cake | チョコレートラバーケーキ | เค้กช็อกโกแลตลาวา | 초콜릿 용암 케이크 | Bánh Chocolate Lava | Kek Coklat Lava | 巧克力 | 280 |
+| 2 | 草莓鮮奶油蛋糕 | Strawberry Fresh Cream Cake | ストロベリーショートケーキ | เค้กครีมสดสตรอเบอร์รี่ | 딸기 생크림 케이크 | Bánh Kem Dâu Tây Tươi | Kek Krim Segar Strawberi | 水果 | 350 |
+| 3 | 抹茶紅豆蛋糕 | Matcha Red Bean Cake | 抹茶小豆ケーキ | เค้กชาเขียวถั่วแดง | 말차 팥 케이크 | Bánh Trà Xanh Đậu Đỏ | Kek Teh Hijau Kacang Merah | 日式 | 320 |
+| 4 | 芒果慕斯蛋糕 | Mango Mousse Cake | マンゴームースケーキ | เค้กมูสมะม่วง | 망고 무스 케이크 | Bánh Mousse Xoài | Kek Mousse Mangga | 水果 | 380 |
+| 5 | 藍莓起司蛋糕 | Blueberry Cheesecake | ブルーベリーチーズケーキ | ชีสเค้กบลูเบอร์รี่ | 블루베리 치즈케이크 | Bánh Phô Mai Việt Quất | Kek Keju Blueberry | 起司 | 420 |
+| 6 | 黑森林蛋糕 | Black Forest Cake | シュヴァルツヴェルダー | เค้กป่าดำ | 블랙 포레스트 케이크 | Bánh Black Forest | Kek Hutan Hitam | 巧克力 | 450 |
+| 7 | 提拉米蘇 | Tiramisu | ティラミス | ทีรามิสุ | 티라미수 | Tiramisu | Tiramisu | 經典 | 360 |
+| 8 | 紅絲絨蛋糕 | Red Velvet Cake | レッドベルベットケーキ | เค้กกำมะหยี่แดง | 레드 벨벳 케이크 | Bánh Red Velvet | Kek Baldu Merah | 經典 | 400 |
+| 9 | 檸檬磅蛋糕 | Lemon Pound Cake | レモンパウンドケーキ | เค้กปอนด์เลมอน | 레몬 파운드 케이크 | Bánh Bơ Chanh | Kek Paun Lemon | 柑橘 | 290 |
+| 10 | 焦糖蘋果塔 | Caramel Apple Tart | キャラメルアップルタルト | ทาร์ตแอปเปิลคาราเมล | 캐러멜 사과 타르트 | Bánh Táo Caramel | Tart Epal Karamel | 水果 | 340 |
 
 ---
 
