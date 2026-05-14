@@ -1,30 +1,20 @@
 using CakeShop.Core.Interfaces;
 using CakeShop.Core.Models;
+using CakeShop.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CakeShop.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository
 {
-    private readonly List<User> _users;
+    private readonly CakeShopDbContext _ctx;
 
-    public UserRepository(IEncryptionService encryptionService)
-    {
-        _users = new List<User>
-        {
-            new()
-            {
-                Id = 1,
-                Username = "test",
-                PasswordHash = encryptionService.HashPassword("test"),
-                Email = "test@cakeshop.com"
-            }
-        };
-    }
+    public UserRepository(CakeShopDbContext ctx) => _ctx = ctx;
 
-    public Task<User?> GetByUsernameAsync(string username)
-        => Task.FromResult(_users.FirstOrDefault(u =>
-            string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase)));
+    public async Task<User?> GetByUsernameAsync(string username)
+        => await _ctx.Users.AsNoTracking()
+               .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
 
-    public Task<User?> GetByIdAsync(int id)
-        => Task.FromResult(_users.FirstOrDefault(u => u.Id == id));
+    public async Task<User?> GetByIdAsync(int id)
+        => await _ctx.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
 }

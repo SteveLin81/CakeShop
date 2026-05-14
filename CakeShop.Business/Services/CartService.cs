@@ -46,8 +46,8 @@ public class CartService : ICartService
             {
                 SessionId = request.SessionId,
                 ProductId = request.ProductId,
-                Product = product,
-                Quantity = request.Quantity
+                Quantity  = request.Quantity
+                // 不設定 Product navigation property，EF Core 以 ProductId 外鍵新增
             });
         }
 
