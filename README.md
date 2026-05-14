@@ -1,6 +1,17 @@
 # 🎂 Sweet Bakes 甜蜜烘焙坊
 
-多語系蛋糕購物網站，後端採 .NET 8 四層架構 + Entity Framework Core 串接 PostgreSQL，前端以 Vue 3 + Element Plus 實作，支援繁中、English、日本語、简中四種語言切換。
+多語系蛋糕購物網站，後端採 .NET 8 四層架構 + Entity Framework Core 串接 PostgreSQL，前端以 Vue 3 + Element Plus 實作，支援 **8 種語言**切換。
+
+| 語系代碼 | 語言 |
+|---------|------|
+| `zh-TW` | 繁體中文 |
+| `zh-CN` | 简体中文 |
+| `en` | English |
+| `ja` | 日本語 |
+| `th` | ภาษาไทย（泰文） |
+| `ko` | 한국어（韓文） |
+| `vi` | Tiếng Việt（越南文） |
+| `ms` | Bahasa Melayu（馬來文） |
 
 ---
 
@@ -170,13 +181,14 @@ dotnet run
 
 | 資料表 | 對應 Model | 說明 |
 |--------|-----------|------|
-| `categories` | `Category` | 商品分類（含 4 語系名稱） |
-| `products` | `Product` | 蛋糕商品（含 4 語系名稱/描述、分類外鍵） |
-| `users` | `User` | 使用者帳號（password_hash 以 SHA-256 儲存） |
-| `cart_items` | `CartItem` | 購物車（session_id 對應帳號名稱） |
-| `announcements` | `Announcement` | 置頂公告（含 4 語系內容） |
+| `categories` | `Category` | 商品分類（含 8 語系名稱：`name`, `name_en`, `name_ja`, `name_zh_cn`, `name_th`, `name_ko`, `name_vi`, `name_ms`） |
+| `products` | `Product` | 蛋糕商品（含 8 語系名稱與描述、分類外鍵） |
+| `users` | `User` | 使用者帳號（`password_hash` 以 SHA-256 儲存） |
+| `cart_items` | `CartItem` | 購物車（`session_id` 對應帳號名稱） |
+| `announcements` | `Announcement` | 置頂公告（含 8 語系內容，新語系欄位為 nullable，不存在時退回英文） |
 
-> 欄位命名使用 `snake_case`（DB）對應 `PascalCase`（C# Model），由 `EFCore.NamingConventions` 套件自動轉換。
+> 欄位命名使用 `snake_case`（DB）對應 `PascalCase`（C# Model），由 `EFCore.NamingConventions` 套件自動轉換。  
+> 新增語系欄位可安全重複執行 `CakeShop.DbSetup`，內部使用 `ALTER TABLE ADD COLUMN IF NOT EXISTS`。
 
 ### EF Core Migrations
 
@@ -307,11 +319,12 @@ dotnet run
 
 | 功能 | 說明 |
 |------|------|
-| 多語系 | 繁中 / English / 日本語 / 简中，語系存入 `localStorage` |
+| 多語系 | 繁中 / 简中 / English / 日本語 / ภาษาไทย / 한국어 / Tiếng Việt / Bahasa Melayu，語系存入 `localStorage` |
+| 多語系實作 | `i18n.js` 含 8 語系 UI 翻譯；商品名稱 / 描述 / 分類 / 公告均存於 DB 多語系欄位，`api.js` 依 locale 查表取值 |
 | 登入 | Modal 彈窗，AES-GCM Token 存入 `localStorage` |
 | 購物車 | 需登入；資料綁定帳號；登出自動清空 |
 | 首頁輪播 | 商品倒排取 4 項，每 4 秒自動切換 |
-| 置頂公告 | 從 `GET /api/announcement` 取得，支援4語系 |
+| 置頂公告 | 從 `GET /api/announcement` 取得，支援 8 語系（新語系退回英文） |
 | Loading 動畫 | 頁面切換顯示深綠 Loading Screen |
 | RWD | 手機、平板、桌機全支援 |
 
@@ -353,6 +366,7 @@ Token 結構：nonce(12 bytes) | tag(16 bytes) | ciphertext  → Base64
 - [x] 購物車資料綁定帳號
 - [x] 置頂公告從 DB 讀取
 - [x] 重整 Solution 架構（_B2C / Business Libraries / Framework）
+- [x] 多語系擴充至 8 種（泰文、韓文、越南文、馬來文）
 - [ ] 使用環境變數管理加密金鑰與連線字串
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）
