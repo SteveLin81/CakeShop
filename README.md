@@ -20,18 +20,48 @@
 
 ## 專案架構
 
+Solution 依用途分為三個 Solution Folder：
+
 ```
 CakeShop/
-├── CakeShop.Core/                    # 共用層（Models、DTOs、Interfaces）
-│   ├── Models/
-│   │   ├── Product.cs
-│   │   ├── Category.cs
-│   │   ├── User.cs
-│   │   ├── CartItem.cs
-│   │   └── Announcement.cs
+│
+├── 📁 _B2C/                                    ← Solution Folder
+│   └── EC.B2C/                                 # 網站入口層（輸入 / 呼叫 / 輸出）
+│       ├── Controllers/
+│       │   ├── AuthController.cs
+│       │   ├── ProductController.cs
+│       │   ├── CartController.cs
+│       │   ├── ContactController.cs
+│       │   └── AnnouncementController.cs
+│       ├── Program.cs                          # DI 註冊、DbContext、Swagger
+│       ├── appsettings.json                    # 含 ConnectionStrings
+│       └── wwwroot/                            # 前端靜態頁面
+│           ├── index.html / products.html / contact.html
+│           ├── css/style.css
+│           └── js/i18n.js / api.js
+│
+├── 📁 Business Libraries/                      ← Solution Folder
+│   └── EC.CommonService/                       # 商業邏輯層
+│       └── Services/
+│           ├── EncryptionService.cs            # SHA-256 雜湊 + AES-256-GCM 加解密
+│           ├── AuthService.cs                  # 登入驗證、Token 產生
+│           ├── ProductService.cs               # 商品查詢邏輯
+│           ├── CartService.cs                  # 購物車操作邏輯
+│           ├── ContactService.cs               # 聯絡表單處理
+│           └── AnnouncementService.cs          # 置頂公告（從 DB 讀取）
+│
+├── 📁 Framework/                               ← Solution Folder
+│   └── EC.Entities/                            # Domain 實體層（無任何外部相依）
+│       └── Models/
+│           ├── Product.cs
+│           ├── Category.cs
+│           ├── User.cs
+│           ├── CartItem.cs
+│           └── Announcement.cs
+│
+├── CakeShop.Core/                              # 合約層（DTOs、Interfaces）
 │   ├── DTOs/
-│   │   ├── ProductDto.cs
-│   │   ├── CategoryDto.cs
+│   │   ├── ProductDto.cs / CategoryDto.cs
 │   │   ├── CartDto.cs
 │   │   ├── LoginRequest.cs / LoginResponse.cs
 │   │   ├── ContactFormDto.cs
@@ -41,58 +71,53 @@ CakeShop/
 │       ├── IAuthService.cs / IProductService.cs / ICartService.cs
 │       ├── IContactService.cs / IAnnouncementService.cs
 │       ├── IProductRepository.cs / IUserRepository.cs
-│       ├── ICartRepository.cs / IAnnouncementRepository.cs
+│       └── ICartRepository.cs / IAnnouncementRepository.cs
 │
-├── CakeShop.Business/                # 商業邏輯層
-│   └── Services/
-│       ├── EncryptionService.cs      # SHA-256 雜湊 + AES-256-GCM 加解密
-│       ├── AuthService.cs            # 登入驗證、Token 產生
-│       ├── ProductService.cs         # 商品查詢邏輯
-│       ├── CartService.cs            # 購物車操作邏輯
-│       ├── ContactService.cs         # 聯絡表單處理
-│       └── AnnouncementService.cs    # 置頂公告（從 DB 讀取）
-│
-├── CakeShop.Infrastructure/          # 非商業邏輯層（資料存取）
+├── CakeShop.Infrastructure/                    # 資料存取層（EF Core）
 │   ├── Data/
-│   │   ├── CakeShopDbContext.cs      # EF Core DbContext
-│   │   └── DesignTimeDbContextFactory.cs  # 供 dotnet ef 使用
+│   │   ├── CakeShopDbContext.cs                # EF Core DbContext
+│   │   └── DesignTimeDbContextFactory.cs       # 供 dotnet ef 使用
 │   └── Repositories/
-│       ├── ProductRepository.cs      # EF Core 實作
-│       ├── UserRepository.cs         # EF Core 實作
-│       ├── CartRepository.cs         # EF Core 實作
-│       └── AnnouncementRepository.cs # EF Core 實作
+│       ├── ProductRepository.cs
+│       ├── UserRepository.cs
+│       ├── CartRepository.cs
+│       └── AnnouncementRepository.cs
 │
-├── CakeShop.Api/                     # 主站台層（輸入 / 呼叫 / 輸出）
-│   ├── Controllers/
-│   │   ├── AuthController.cs
-│   │   ├── ProductController.cs
-│   │   ├── CartController.cs
-│   │   ├── ContactController.cs
-│   │   └── AnnouncementController.cs
-│   ├── Program.cs                    # DI 註冊、DbContext、Swagger
-│   ├── appsettings.json              # 含 ConnectionStrings
-│   └── wwwroot/                      # 前端靜態頁面
-│       ├── index.html / products.html / contact.html
-│       ├── css/style.css
-│       └── js/i18n.js / api.js
-│
-└── CakeShop.DbSetup/                 # 資料庫初始化工具
-    └── Program.cs                    # 建立 DB、資料表、種子資料
+└── CakeShop.DbSetup/                           # 資料庫初始化工具
+    └── Program.cs                              # 建立 DB、資料表、種子資料
 ```
 
-### 請求流程與依賴方向
+### 命名空間對應
+
+| 專案 | 命名空間 | 職責 |
+|------|---------|------|
+| `EC.B2C` | `EC.B2C.Controllers` | HTTP 輸入／輸出，不含商業邏輯 |
+| `EC.CommonService` | `EC.CommonService.Services` | 商業邏輯實作 |
+| `EC.Entities` | `EC.Entities.Models` | Domain Model，零相依 |
+| `CakeShop.Core` | `CakeShop.Core.Interfaces` / `.DTOs` | 介面定義與資料傳輸物件 |
+| `CakeShop.Infrastructure` | `CakeShop.Infrastructure` | EF Core Repository 實作 |
+
+### 請求流程與專案依賴
 
 ```
-瀏覽器 → Controller（輸入/輸出）→ Service（商業邏輯）→ Repository → DbContext → PostgreSQL
+瀏覽器
+  └─▶ EC.B2C (Controller)
+        └─▶ EC.CommonService (Service)
+              └─▶ CakeShop.Core (Interface)
+                    └─▶ CakeShop.Infrastructure (Repository)
+                              └─▶ DbContext ─▶ PostgreSQL
 
-依賴方向：
-Api → Business → Core ← Infrastructure
+專案依賴方向：
+EC.B2C ──▶ EC.CommonService ──▶ CakeShop.Core ◀── CakeShop.Infrastructure
+  │                                    │
+  └────────────────────────────────────┴──▶ EC.Entities（所有層共享實體定義）
 ```
 
-- **Controller**：接收請求、呼叫 Service、回傳結果，不含商業邏輯
-- **Service**：實作商業邏輯，依賴 Interface（定義於 Core）
-- **Repository**：EF Core 實作，透過 `CakeShopDbContext` 存取 PostgreSQL
-- **Core**：純定義層，不依賴其他專案
+- **EC.B2C**：接收請求、呼叫 Service、回傳結果，僅負責輸入輸出
+- **EC.CommonService**：實作商業邏輯，依賴 `CakeShop.Core` 介面
+- **EC.Entities**：純 Domain Model，不依賴任何其他專案
+- **CakeShop.Core**：介面與 DTO 定義層，依賴 `EC.Entities`
+- **CakeShop.Infrastructure**：EF Core Repository 實作，依賴 `CakeShop.Core` 與 `EC.Entities`
 
 ---
 
@@ -108,7 +133,7 @@ Api → Business → Core ← Infrastructure
 
 ### 連線字串
 
-位於 `CakeShop.Api/appsettings.json`：
+位於 `_B2C/EC.B2C/appsettings.json`：
 
 ```json
 {
@@ -159,9 +184,10 @@ dotnet run
 
 ```bash
 # 1. 確認資料庫已存在（執行 DbSetup 或手動建立）
-# 2. 套用所有 Pending Migrations
-cd CakeShop.Api
-dotnet ef database update --project ../CakeShop.Infrastructure
+# 2. 套用所有 Pending Migrations（在 solution 根目錄執行）
+dotnet ef database update \
+  --project CakeShop.Infrastructure \
+  --startup-project _B2C/EC.B2C
 ```
 
 **新增資料表或欄位變更時：**
@@ -170,11 +196,11 @@ dotnet ef database update --project ../CakeShop.Infrastructure
 # 在 solution 根目錄執行
 dotnet ef migrations add <MigrationName> \
   --project CakeShop.Infrastructure \
-  --startup-project CakeShop.Api
+  --startup-project _B2C/EC.B2C
 
 dotnet ef database update \
   --project CakeShop.Infrastructure \
-  --startup-project CakeShop.Api
+  --startup-project _B2C/EC.B2C
 ```
 
 **檢視 Migration 狀態：**
@@ -182,7 +208,7 @@ dotnet ef database update \
 ```bash
 dotnet ef migrations list \
   --project CakeShop.Infrastructure \
-  --startup-project CakeShop.Api
+  --startup-project _B2C/EC.B2C
 ```
 
 ---
@@ -207,7 +233,7 @@ dotnet build
 ### 3. 啟動 API 伺服器
 
 ```bash
-cd CakeShop.Api
+cd _B2C/EC.B2C
 dotnet run
 ```
 
@@ -326,6 +352,7 @@ Token 結構：nonce(12 bytes) | tag(16 bytes) | ciphertext  → Base64
 - [x] 整合 PostgreSQL，使用 EF Core Repository
 - [x] 購物車資料綁定帳號
 - [x] 置頂公告從 DB 讀取
+- [x] 重整 Solution 架構（_B2C / Business Libraries / Framework）
 - [ ] 使用環境變數管理加密金鑰與連線字串
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）
