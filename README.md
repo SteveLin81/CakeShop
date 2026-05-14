@@ -31,13 +31,13 @@
 
 ## 專案架構
 
-Solution 依用途分為三個 Solution Folder：
+Solution 依用途分為五個 Solution Folder：
 
 ```
 CakeShop/
 │
-├── 📁 _B2C/                                    ← Solution Folder
-│   └── EC.B2C/                                 # 網站入口層（輸入 / 呼叫 / 輸出）
+├── 📁 _B2C/                                    ← Solution Folder：B2C 消費者網站
+│   └── EC.B2C/                                 # 網站入口層（HTTP 輸入 / 呼叫 / 輸出）
 │       ├── Controllers/
 │       │   ├── AuthController.cs
 │       │   ├── ProductController.cs
@@ -45,14 +45,34 @@ CakeShop/
 │       │   ├── ContactController.cs
 │       │   └── AnnouncementController.cs
 │       ├── Program.cs                          # DI 註冊、DbContext、Swagger
-│       ├── appsettings.json                    # 含 ConnectionStrings
+│       ├── appsettings.json                    # Port 5000、ConnectionStrings
 │       └── wwwroot/                            # 前端靜態頁面
 │           ├── index.html / products.html / contact.html
 │           ├── css/style.css
 │           └── js/i18n.js / api.js
 │
-├── 📁 Business Libraries/                      ← Solution Folder
-│   └── EC.CommonService/                       # 商業邏輯層
+├── 📁 _API/                                    ← Solution Folder：對外查詢 API
+│   └── EC.API/                                 # 外部 RESTful 查詢 API
+│       ├── Controllers/
+│       │   ├── ProductsController.cs           # 商品與分類查詢
+│       │   ├── AnnouncementsController.cs      # 公告查詢
+│       │   └── MembersController.cs            # 會員資訊查詢
+│       ├── Program.cs                          # DI 註冊、DbContext、Swagger（根路徑）
+│       └── appsettings.json                    # Port 5100、ConnectionStrings
+│
+├── 📁 _Test/                                   ← Solution Folder：單元測試
+│   └── EC.Test/                                # xUnit + Moq + FluentAssertions
+│       ├── GlobalUsings.cs                     # global using Xunit / Moq / FluentAssertions
+│       └── Services/
+│           ├── EncryptionServiceTests.cs       # 13 個測試
+│           ├── AuthServiceTests.cs             # 10 個測試
+│           ├── ProductServiceTests.cs          # 11 個測試
+│           ├── CartServiceTests.cs             # 13 個測試
+│           ├── AnnouncementServiceTests.cs     #  7 個測試
+│           └── ContactServiceTests.cs          #  3 個測試
+│
+├── 📁 Business Libraries/                      ← Solution Folder：商業邏輯
+│   └── EC.CommonService/
 │       └── Services/
 │           ├── EncryptionService.cs            # SHA-256 雜湊 + AES-256-GCM 加解密
 │           ├── AuthService.cs                  # 登入驗證、Token 產生
@@ -61,7 +81,7 @@ CakeShop/
 │           ├── ContactService.cs               # 聯絡表單處理
 │           └── AnnouncementService.cs          # 置頂公告（從 DB 讀取）
 │
-├── 📁 Framework/                               ← Solution Folder
+├── 📁 Framework/                               ← Solution Folder：基礎架構
 │   └── EC.Entities/                            # Domain 實體層（無任何外部相依）
 │       └── Models/
 │           ├── Product.cs
@@ -102,7 +122,9 @@ CakeShop/
 
 | 專案 | 命名空間 | 職責 |
 |------|---------|------|
-| `EC.B2C` | `EC.B2C.Controllers` | HTTP 輸入／輸出，不含商業邏輯 |
+| `EC.B2C` | `EC.B2C.Controllers` | B2C 網站 HTTP 輸入／輸出 |
+| `EC.API` | `EC.API.Controllers` | 對外查詢 RESTful API |
+| `EC.Test` | `EC.Test.Services` | 單元測試（xUnit + Moq） |
 | `EC.CommonService` | `EC.CommonService.Services` | 商業邏輯實作 |
 | `EC.Entities` | `EC.Entities.Models` | Domain Model，零相依 |
 | `CakeShop.Core` | `CakeShop.Core.Interfaces` / `.DTOs` | 介面定義與資料傳輸物件 |
@@ -111,20 +133,33 @@ CakeShop/
 ### 請求流程與專案依賴
 
 ```
-瀏覽器
-  └─▶ EC.B2C (Controller)
-        └─▶ EC.CommonService (Service)
-              └─▶ CakeShop.Core (Interface)
-                    └─▶ CakeShop.Infrastructure (Repository)
-                              └─▶ DbContext ─▶ PostgreSQL
+瀏覽器                    外部呼叫端
+  │                          │
+  ▼                          ▼
+EC.B2C (Port 5000)      EC.API (Port 5100)
+  │                          │
+  └──────────┬───────────────┘
+             ▼
+     EC.CommonService (Service)
+             │
+             ▼
+     CakeShop.Core (Interface)
+             │
+             ▼
+   CakeShop.Infrastructure (Repository)
+             │
+             ▼
+      DbContext ─▶ PostgreSQL
 
 專案依賴方向：
-EC.B2C ──▶ EC.CommonService ──▶ CakeShop.Core ◀── CakeShop.Infrastructure
-  │                                    │
-  └────────────────────────────────────┴──▶ EC.Entities（所有層共享實體定義）
+EC.B2C / EC.API ──▶ EC.CommonService ──▶ CakeShop.Core ◀── CakeShop.Infrastructure
+       │                                        │
+       └────────────────────────────────────────┴──▶ EC.Entities（所有層共享實體定義）
 ```
 
-- **EC.B2C**：接收請求、呼叫 Service、回傳結果，僅負責輸入輸出
+- **EC.B2C**：接收請求、呼叫 Service、回傳結果，附帶前端靜態檔
+- **EC.API**：對外查詢 API，Swagger UI 預設顯示於根路徑
+- **EC.Test**：單元測試，使用 Moq 隔離外部相依
 - **EC.CommonService**：實作商業邏輯，依賴 `CakeShop.Core` 介面
 - **EC.Entities**：純 Domain Model，不依賴任何其他專案
 - **CakeShop.Core**：介面與 DTO 定義層，依賴 `EC.Entities`
@@ -313,7 +348,7 @@ dotnet restore
 dotnet build
 ```
 
-### 3. 啟動 API 伺服器
+### 3. 啟動 B2C 網站
 
 ```bash
 cd _B2C/EC.B2C
@@ -325,14 +360,36 @@ dotnet run
 ✔ 資料庫連線成功（TESTDB）
 ```
 
-### 4. 開啟網站
+### 4. 啟動對外 API（選用）
+
+```bash
+cd _API/EC.API
+dotnet run
+```
+
+伺服器監聽 **http://localhost:5100**，根路徑直接顯示 Swagger UI。
+
+### 5. 開啟網站
 
 | 頁面 | 網址 |
 |------|------|
 | 首頁 | http://localhost:5000 |
 | 商品頁 | http://localhost:5000/products.html |
 | 聯絡我們 | http://localhost:5000/contact.html |
-| Swagger UI | http://localhost:5000/swagger |
+| B2C Swagger UI | http://localhost:5000/swagger |
+| EC.API Swagger UI | http://localhost:5100 |
+
+### 6. 執行單元測試
+
+```bash
+cd _Test/EC.Test
+dotnet test
+```
+
+預期結果：
+```
+已通過! - 失敗: 0，通過: 61，略過: 0，總計: 61
+```
 
 ---
 
@@ -349,14 +406,16 @@ dotnet run
 
 ## API 端點一覽
 
-### 認證
+### EC.B2C（Port 5000）— 含認證與購物車
+
+#### 認證
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
 | POST | `/api/auth/login` | 登入，回傳 AES-256-GCM 加密 Token |
 | POST | `/api/auth/validate` | 驗證 Token 是否有效 |
 
-### 商品
+#### 商品
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
@@ -365,7 +424,7 @@ dotnet run
 | GET | `/api/product/categories` | 取得分類列表 |
 | GET | `/api/product/category/{id}` | 依分類取得商品 |
 
-### 購物車
+#### 購物車
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
@@ -377,12 +436,42 @@ dotnet run
 
 > `sessionId` 使用登入帳號名稱（如 `test`），確保購物車資料綁定帳號。
 
-### 聯絡 / 公告
+#### 聯絡 / 公告
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
 | POST | `/api/contact` | 提交聯絡表單 |
 | GET | `/api/announcement` | 取得啟用中的置頂公告（從 DB 讀取） |
+
+---
+
+### EC.API（Port 5100）— 對外查詢 API
+
+Swagger UI 位於根路徑：**http://localhost:5100**
+
+#### 商品
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| GET | `/api/products` | 取得全部商品（含 8 語系） |
+| GET | `/api/products/{id}` | 依 ID 查詢商品 |
+| GET | `/api/products/category/{categoryId}` | 依分類查詢商品 |
+| GET | `/api/products/categories` | 取得所有分類 |
+
+#### 公告
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| GET | `/api/announcements/active` | 取得目前生效中的公告 |
+
+#### 會員
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| GET | `/api/members/{username}` | 依帳號查詢會員（回傳 Id / Username / Email / CreatedAt） |
+| GET | `/api/members/id/{id}` | 依 ID 查詢會員 |
+
+> 會員端點回傳安全欄位（不含 PasswordHash）。
 
 ---
 
@@ -433,13 +522,37 @@ Token 結構：nonce(12 bytes) | tag(16 bytes) | ciphertext  → Base64
 
 ---
 
+## 單元測試
+
+使用 **xUnit + Moq + FluentAssertions**，共 61 個測試，全數通過。
+
+| 測試類別 | 測試數 | 涵蓋範圍 |
+|---------|--------|---------|
+| `EncryptionServiceTests` | 13 | HashPassword / VerifyPassword / AES-GCM 加解密 / 竄改偵測 |
+| `AuthServiceTests` | 10 | LoginAsync / ValidateTokenAsync / GetUsernameFromTokenAsync |
+| `ProductServiceTests` | 11 | 商品查詢、分類查詢、nullable 語系欄位 fallback、DTO 對應 |
+| `CartServiceTests` | 13 | GetCart / AddToCart / UpdateQuantity / Remove / Clear |
+| `AnnouncementServiceTests` | 7 | 公告查詢、4 種語系 null fallback |
+| `ContactServiceTests` | 3 | 表單提交成功回應 |
+
+```bash
+# 執行測試
+dotnet test _Test/EC.Test
+
+# 已通過! - 失敗: 0，通過: 61，略過: 0，總計: 61
+```
+
+---
+
 ## 後續擴充建議
 
 - [x] 整合 PostgreSQL，使用 EF Core Repository
 - [x] 購物車資料綁定帳號
 - [x] 置頂公告從 DB 讀取
-- [x] 重整 Solution 架構（_B2C / Business Libraries / Framework）
+- [x] 重整 Solution 架構（_B2C / _API / _Test / Business Libraries / Framework）
 - [x] 多語系擴充至 8 種（泰文、韓文、越南文、馬來文）
+- [x] 新增 EC.API 對外查詢 API（商品、公告、會員，Port 5100）
+- [x] 建立 EC.Test 單元測試專案（61 個測試全數通過）
 - [ ] 使用環境變數管理加密金鑰與連線字串
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）
