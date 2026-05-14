@@ -1,6 +1,6 @@
 # 🎂 Sweet Bakes 甜蜜烘焙坊
 
-多語系蛋糕購物網站，後端採 .NET 8 四層架構，前端以 Vue 3 + Element Plus 實作，支援繁中、English、日本語、简中四種語言切換。
+多語系蛋糕購物網站，後端採 .NET 8 四層架構 + Entity Framework Core 串接 PostgreSQL，前端以 Vue 3 + Element Plus 實作，支援繁中、English、日本語、简中四種語言切換。
 
 ---
 
@@ -10,10 +10,11 @@
 |------|------|
 | 後端框架 | ASP.NET Core 8 Web API |
 | 語言 | C# 12 |
+| ORM | Entity Framework Core 8（Npgsql 驅動） |
+| 資料庫 | PostgreSQL 9.6+ |
 | 前端框架 | Vue 3（CDN）、Element Plus、Vue-i18n |
 | 加密 | SHA-256 密碼雜湊 + AES-256-GCM Token |
 | API 文件 | Swagger / Swashbuckle |
-| 資料儲存 | 記憶體（Hardcoded，無資料庫依賴） |
 
 ---
 
@@ -21,79 +22,76 @@
 
 ```
 CakeShop/
-├── CakeShop.Core/                  # 共用層（Models、DTOs、Interfaces）
+├── CakeShop.Core/                    # 共用層（Models、DTOs、Interfaces）
 │   ├── Models/
 │   │   ├── Product.cs
 │   │   ├── Category.cs
 │   │   ├── User.cs
-│   │   └── CartItem.cs
+│   │   ├── CartItem.cs
+│   │   └── Announcement.cs
 │   ├── DTOs/
 │   │   ├── ProductDto.cs
 │   │   ├── CategoryDto.cs
 │   │   ├── CartDto.cs
-│   │   ├── LoginRequest.cs
-│   │   ├── LoginResponse.cs
+│   │   ├── LoginRequest.cs / LoginResponse.cs
 │   │   ├── ContactFormDto.cs
 │   │   └── AnnouncementDto.cs
 │   └── Interfaces/
 │       ├── IEncryptionService.cs
-│       ├── IAuthService.cs
-│       ├── IProductService.cs
-│       ├── ICartService.cs
-│       ├── IContactService.cs
-│       ├── IAnnouncementService.cs
-│       ├── IProductRepository.cs
-│       ├── IUserRepository.cs
-│       └── ICartRepository.cs
+│       ├── IAuthService.cs / IProductService.cs / ICartService.cs
+│       ├── IContactService.cs / IAnnouncementService.cs
+│       ├── IProductRepository.cs / IUserRepository.cs
+│       ├── ICartRepository.cs / IAnnouncementRepository.cs
 │
-├── CakeShop.Business/              # 商業邏輯層
+├── CakeShop.Business/                # 商業邏輯層
 │   └── Services/
-│       ├── EncryptionService.cs    # SHA-256 雜湊 + AES-256-GCM 加解密
-│       ├── AuthService.cs          # 登入驗證、Token 產生
-│       ├── ProductService.cs       # 商品查詢邏輯
-│       ├── CartService.cs          # 購物車操作邏輯
-│       ├── ContactService.cs       # 聯絡表單處理
-│       └── AnnouncementService.cs  # 置頂公告管理
+│       ├── EncryptionService.cs      # SHA-256 雜湊 + AES-256-GCM 加解密
+│       ├── AuthService.cs            # 登入驗證、Token 產生
+│       ├── ProductService.cs         # 商品查詢邏輯
+│       ├── CartService.cs            # 購物車操作邏輯
+│       ├── ContactService.cs         # 聯絡表單處理
+│       └── AnnouncementService.cs    # 置頂公告（從 DB 讀取）
 │
-├── CakeShop.Infrastructure/        # 非商業邏輯層（資料存取）
+├── CakeShop.Infrastructure/          # 非商業邏輯層（資料存取）
+│   ├── Data/
+│   │   ├── CakeShopDbContext.cs      # EF Core DbContext
+│   │   └── DesignTimeDbContextFactory.cs  # 供 dotnet ef 使用
 │   └── Repositories/
-│       ├── ProductRepository.cs    # 10 種蛋糕硬碼資料
-│       ├── UserRepository.cs       # 使用者帳號硬碼資料
-│       └── CartRepository.cs       # 記憶體購物車
+│       ├── ProductRepository.cs      # EF Core 實作
+│       ├── UserRepository.cs         # EF Core 實作
+│       ├── CartRepository.cs         # EF Core 實作
+│       └── AnnouncementRepository.cs # EF Core 實作
 │
-├── CakeShop.Api/                   # 主站台層（輸入 / 呼叫 / 輸出）
+├── CakeShop.Api/                     # 主站台層（輸入 / 呼叫 / 輸出）
 │   ├── Controllers/
 │   │   ├── AuthController.cs
 │   │   ├── ProductController.cs
 │   │   ├── CartController.cs
 │   │   ├── ContactController.cs
 │   │   └── AnnouncementController.cs
-│   ├── Program.cs                  # DI 註冊、Swagger、靜態檔案
-│   └── wwwroot/                    # 前端靜態頁面
-│       ├── index.html              # 首頁（Hero + Carousel + 精選商品）
-│       ├── products.html           # 商品頁（分類篩選 + 搜尋）
-│       ├── contact.html            # 聯絡我們（表單）
-│       ├── css/style.css           # 自訂樣式（深綠主色調）
-│       └── js/
-│           ├── i18n.js             # 四語系翻譯定義
-│           └── api.js              # API 呼叫工具函式
+│   ├── Program.cs                    # DI 註冊、DbContext、Swagger
+│   ├── appsettings.json              # 含 ConnectionStrings
+│   └── wwwroot/                      # 前端靜態頁面
+│       ├── index.html / products.html / contact.html
+│       ├── css/style.css
+│       └── js/i18n.js / api.js
 │
-└── CakeShop.sln
+└── CakeShop.DbSetup/                 # 資料庫初始化工具
+    └── Program.cs                    # 建立 DB、資料表、種子資料
 ```
 
-### 架構說明
+### 請求流程與依賴方向
 
 ```
-請求流程：
-瀏覽器 → Controller（輸入/輸出）→ Service（商業邏輯）→ Repository（資料）
+瀏覽器 → Controller（輸入/輸出）→ Service（商業邏輯）→ Repository → DbContext → PostgreSQL
 
 依賴方向：
 Api → Business → Core ← Infrastructure
 ```
 
-- **Controller**：只負責接收請求、呼叫 Service、回傳結果，不含任何業務邏輯
-- **Service**：實作商業邏輯，依賴 Interface（全部介面定義在 Core）
-- **Repository**：負責資料存取，目前以記憶體 List 模擬資料庫
+- **Controller**：接收請求、呼叫 Service、回傳結果，不含商業邏輯
+- **Service**：實作商業邏輯，依賴 Interface（定義於 Core）
+- **Repository**：EF Core 實作，透過 `CakeShopDbContext` 存取 PostgreSQL
 - **Core**：純定義層，不依賴其他專案
 
 ---
@@ -101,31 +99,124 @@ Api → Business → Core ← Infrastructure
 ## 環境需求
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- PostgreSQL 9.6 以上（本機或遠端皆可）
 - 瀏覽器（Chrome / Edge / Firefox 最新版）
-- 不需要資料庫，無需額外安裝套件
+
+---
+
+## 資料庫設定
+
+### 連線字串
+
+位於 `CakeShop.Api/appsettings.json`：
+
+```json
+{
+  "ConnectionStrings": {
+    "Default": "Host=127.0.0.1;Port=5432;Database=TESTDB;Username=testdb0101;Password=testdb0101"
+  }
+}
+```
+
+修改連線字串以符合您的環境，也可透過環境變數覆蓋：
+
+```bash
+# Linux / macOS
+export ConnectionStrings__Default="Host=...;Port=5432;Database=TESTDB;..."
+
+# Windows PowerShell
+$env:ConnectionStrings__Default = "Host=...;Port=5432;Database=TESTDB;..."
+```
+
+### 初始化資料庫（首次使用）
+
+執行 `CakeShop.DbSetup` 工具，自動完成：
+1. 建立 PostgreSQL 使用者 `testdb0101`（若不存在）
+2. 建立資料庫 `TESTDB`
+3. 建立 5 張資料表
+4. 插入種子資料（10 商品、6 分類、預設帳號、公告）
+
+```bash
+cd CakeShop.DbSetup
+dotnet run
+```
+
+### 資料表結構
+
+| 資料表 | 對應 Model | 說明 |
+|--------|-----------|------|
+| `categories` | `Category` | 商品分類（含 4 語系名稱） |
+| `products` | `Product` | 蛋糕商品（含 4 語系名稱/描述、分類外鍵） |
+| `users` | `User` | 使用者帳號（password_hash 以 SHA-256 儲存） |
+| `cart_items` | `CartItem` | 購物車（session_id 對應帳號名稱） |
+| `announcements` | `Announcement` | 置頂公告（含 4 語系內容） |
+
+> 欄位命名使用 `snake_case`（DB）對應 `PascalCase`（C# Model），由 `EFCore.NamingConventions` 套件自動轉換。
+
+### EF Core Migrations
+
+專案使用 **EF Core Migrations** 管理 Schema 版本。首次在全新環境部署時：
+
+```bash
+# 1. 確認資料庫已存在（執行 DbSetup 或手動建立）
+# 2. 套用所有 Pending Migrations
+cd CakeShop.Api
+dotnet ef database update --project ../CakeShop.Infrastructure
+```
+
+**新增資料表或欄位變更時：**
+
+```bash
+# 在 solution 根目錄執行
+dotnet ef migrations add <MigrationName> \
+  --project CakeShop.Infrastructure \
+  --startup-project CakeShop.Api
+
+dotnet ef database update \
+  --project CakeShop.Infrastructure \
+  --startup-project CakeShop.Api
+```
+
+**檢視 Migration 狀態：**
+
+```bash
+dotnet ef migrations list \
+  --project CakeShop.Infrastructure \
+  --startup-project CakeShop.Api
+```
 
 ---
 
 ## 啟動方式
 
-### 1. 還原套件並建置
+### 1. 初始化資料庫（首次執行）
 
 ```bash
-cd CakeShop
+cd CakeShop.DbSetup
+dotnet run
+```
+
+### 2. 還原套件並建置
+
+```bash
+cd ..          # 回到 solution 根目錄
 dotnet restore
 dotnet build
 ```
 
-### 2. 啟動 API 伺服器
+### 3. 啟動 API 伺服器
 
 ```bash
 cd CakeShop.Api
 dotnet run
 ```
 
-伺服器預設監聽 **http://localhost:5000**
+伺服器預設監聽 **http://localhost:5000**，啟動時會顯示：
+```
+✔ 資料庫連線成功（TESTDB）
+```
 
-### 3. 開啟網站
+### 4. 開啟網站
 
 | 頁面 | 網址 |
 |------|------|
@@ -143,7 +234,7 @@ dotnet run
 | 帳號 | `test` |
 | 密碼 | `test` |
 
-> 密碼以 SHA-256 雜湊儲存；登入後返回的 Token 以 AES-256-GCM 加密。
+> 密碼以 `SHA-256(password + salt)` 雜湊後存於 DB；登入後返回的 Token 以 AES-256-GCM 加密。
 
 ---
 
@@ -153,14 +244,14 @@ dotnet run
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
-| POST | `/api/auth/login` | 登入，回傳加密 Token |
+| POST | `/api/auth/login` | 登入，回傳 AES-256-GCM 加密 Token |
 | POST | `/api/auth/validate` | 驗證 Token 是否有效 |
 
 ### 商品
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
-| GET | `/api/product` | 取得全部商品 |
+| GET | `/api/product` | 取得全部商品（含分類） |
 | GET | `/api/product/{id}` | 取得單一商品 |
 | GET | `/api/product/categories` | 取得分類列表 |
 | GET | `/api/product/category/{id}` | 依分類取得商品 |
@@ -170,19 +261,19 @@ dotnet run
 | 方法 | 路徑 | 說明 |
 |------|------|------|
 | GET | `/api/cart/{sessionId}` | 取得購物車內容 |
-| POST | `/api/cart` | 新增商品 |
-| PUT | `/api/cart/{sessionId}/items/{itemId}` | 更新數量 |
-| DELETE | `/api/cart/{sessionId}/items/{itemId}` | 移除單項 |
+| POST | `/api/cart` | 新增商品至購物車 |
+| PUT | `/api/cart/{sessionId}/items/{itemId}` | 更新商品數量 |
+| DELETE | `/api/cart/{sessionId}/items/{itemId}` | 移除單項商品 |
 | DELETE | `/api/cart/{sessionId}` | 清空購物車 |
 
-> 已登入時 `sessionId` 使用帳號名稱，確保購物車資料與帳號綁定。
+> `sessionId` 使用登入帳號名稱（如 `test`），確保購物車資料綁定帳號。
 
 ### 聯絡 / 公告
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
 | POST | `/api/contact` | 提交聯絡表單 |
-| GET | `/api/announcement` | 取得置頂公告 |
+| GET | `/api/announcement` | 取得啟用中的置頂公告（從 DB 讀取） |
 
 ---
 
@@ -190,20 +281,17 @@ dotnet run
 
 | 功能 | 說明 |
 |------|------|
-| 多語系 | 繁中 / English / 日本語 / 简中，語系設定存入 `localStorage` |
-| 登入 | Modal 彈窗，Token 存入 `localStorage` |
-| 購物車 | 需登入才能操作；登出後自動清空；資料綁定帳號 |
-| 首頁輪播 | 商品清單倒排取4項，每4秒自動切換 |
-| 置頂公告 | 來自後端 API，支援4語系，可按 ✕ 關閉（session 內不再顯示） |
-| Loading 動畫 | 頁面切換時顯示深綠色 Loading Screen |
-| 進/離場動畫 | Navbar 下滑 + 內容淡入；離頁時內容淡出上移 |
-| RWD | 支援手機、平板、桌機 |
+| 多語系 | 繁中 / English / 日本語 / 简中，語系存入 `localStorage` |
+| 登入 | Modal 彈窗，AES-GCM Token 存入 `localStorage` |
+| 購物車 | 需登入；資料綁定帳號；登出自動清空 |
+| 首頁輪播 | 商品倒排取 4 項，每 4 秒自動切換 |
+| 置頂公告 | 從 `GET /api/announcement` 取得，支援4語系 |
+| Loading 動畫 | 頁面切換顯示深綠 Loading Screen |
+| RWD | 手機、平板、桌機全支援 |
 
 ---
 
-## 商品資料
-
-硬碼於 `CakeShop.Infrastructure/Repositories/ProductRepository.cs`，共 10 種蛋糕：
+## 商品資料（儲存於 PostgreSQL）
 
 | # | 商品名稱 | 分類 | 價格 |
 |---|----------|------|------|
@@ -223,20 +311,24 @@ dotnet run
 ## 加密機制
 
 ```
-密碼儲存：SHA-256( password + salt ) → Base64
+密碼儲存：SHA-256( password + "CakeShopPasswordSalt@2024" ) → Base64 → 存入 users.password_hash
 Token 格式：AES-256-GCM 加密的 "userId|username|expiresAt"
-Token 結構：nonce(12 bytes) | tag(16 bytes) | ciphertext
+Token 結構：nonce(12 bytes) | tag(16 bytes) | ciphertext  → Base64
 ```
 
-密鑰由 `MasterSecret` 字串經 SHA-256 推導，實際部署時應替換為環境變數。
+密鑰由 `MasterSecret` 字串經 SHA-256 推導（32 bytes = AES-256 key size）。  
+實際部署時應將 `MasterSecret` 改為環境變數注入。
 
 ---
 
 ## 後續擴充建議
 
-- [ ] 整合 PostgreSQL / SQL Server，替換記憶體 Repository
-- [ ] 使用 `appsettings.json` 管理加密金鑰（注入 `IConfiguration`）
+- [x] 整合 PostgreSQL，使用 EF Core Repository
+- [x] 購物車資料綁定帳號
+- [x] 置頂公告從 DB 讀取
+- [ ] 使用環境變數管理加密金鑰與連線字串
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）
 - [ ] 加入結帳 / 訂單管理功能
-- [ ] Docker 容器化部署
+- [ ] Docker 容器化部署（含 PostgreSQL）
+- [ ] 加入 EF Core 完整 Migration 歷史記錄
