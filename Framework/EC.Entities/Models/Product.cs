@@ -1,6 +1,6 @@
 namespace EC.Entities.Models;
 
-public class Product
+public class Product : AuditableEntity
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -24,5 +24,4 @@ public class Product
     public int CategoryId { get; set; }
     public Category? Category { get; set; }
     public bool IsAvailable { get; set; } = true;
-    public DateTime CreatedAt { get; set; }
 }

@@ -113,11 +113,16 @@ await Execute(db, "CREATE EXTENSION IF NOT EXISTS pgcrypto;");
 // categories
 await Execute(db, """
     CREATE TABLE IF NOT EXISTS categories (
-        id         SERIAL      PRIMARY KEY,
-        name       VARCHAR(50) NOT NULL,
-        name_en    VARCHAR(50),
-        name_ja    VARCHAR(50),
-        name_zh_cn VARCHAR(50)
+        id           SERIAL       PRIMARY KEY,
+        name         VARCHAR(50)  NOT NULL,
+        name_en      VARCHAR(50),
+        name_ja      VARCHAR(50),
+        name_zh_cn   VARCHAR(50),
+        created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        created_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        update_count INTEGER      NOT NULL DEFAULT 0
     );
 """);
 
@@ -137,7 +142,11 @@ await Execute(db, """
         image_url         VARCHAR(500),
         category_id       INTEGER       REFERENCES categories(id),
         is_available      BOOLEAN       NOT NULL DEFAULT TRUE,
-        created_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+        created_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        created_by        VARCHAR(100)  NOT NULL DEFAULT 'admin',
+        updated_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_by        VARCHAR(100)  NOT NULL DEFAULT 'admin',
+        update_count      INTEGER       NOT NULL DEFAULT 0
     );
 """);
 
@@ -148,19 +157,26 @@ await Execute(db, """
         username      VARCHAR(50)  UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         email         VARCHAR(100),
-        created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+        created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        created_by    VARCHAR(100) NOT NULL DEFAULT 'admin',
+        updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_by    VARCHAR(100) NOT NULL DEFAULT 'admin',
+        update_count  INTEGER      NOT NULL DEFAULT 0
     );
 """);
 
 // cart_items
 await Execute(db, """
     CREATE TABLE IF NOT EXISTS cart_items (
-        id         SERIAL       PRIMARY KEY,
-        session_id VARCHAR(100) NOT NULL,
-        product_id INTEGER      REFERENCES products(id) ON DELETE CASCADE,
-        quantity   INTEGER      NOT NULL DEFAULT 1 CHECK (quantity > 0),
-        created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+        id           SERIAL       PRIMARY KEY,
+        session_id   VARCHAR(100) NOT NULL,
+        product_id   INTEGER      REFERENCES products(id) ON DELETE CASCADE,
+        quantity     INTEGER      NOT NULL DEFAULT 1 CHECK (quantity > 0),
+        created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        created_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        update_count INTEGER      NOT NULL DEFAULT 0
     );
     CREATE INDEX IF NOT EXISTS idx_cart_session ON cart_items(session_id);
 """);
@@ -168,14 +184,17 @@ await Execute(db, """
 // announcements
 await Execute(db, """
     CREATE TABLE IF NOT EXISTS announcements (
-        id            SERIAL      PRIMARY KEY,
-        content       TEXT        NOT NULL,
+        id            SERIAL       PRIMARY KEY,
+        content       TEXT         NOT NULL,
         content_en    TEXT,
         content_ja    TEXT,
         content_zh_cn TEXT,
-        is_active     BOOLEAN     NOT NULL DEFAULT TRUE,
-        created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
+        created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        created_by    VARCHAR(100) NOT NULL DEFAULT 'admin',
+        updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_by    VARCHAR(100) NOT NULL DEFAULT 'admin',
+        update_count  INTEGER      NOT NULL DEFAULT 0
     );
 """);
 
@@ -203,7 +222,36 @@ await Execute(db, """
         ADD COLUMN IF NOT EXISTS content_vi TEXT,
         ADD COLUMN IF NOT EXISTS content_ms TEXT;
 """);
-Console.WriteLine("✔ 多語系欄位就緒\n正在插入種子資料...");
+Console.WriteLine("✔ 多語系欄位就緒");
+
+// ── Step 2c：新增稽核欄位（IF NOT EXISTS，安全重複執行）────────────────
+await Execute(db, """
+    ALTER TABLE categories
+        ADD COLUMN IF NOT EXISTS created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        ADD COLUMN IF NOT EXISTS created_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        ADD COLUMN IF NOT EXISTS updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        ADD COLUMN IF NOT EXISTS updated_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        ADD COLUMN IF NOT EXISTS update_count INTEGER      NOT NULL DEFAULT 0;
+    ALTER TABLE products
+        ADD COLUMN IF NOT EXISTS created_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        ADD COLUMN IF NOT EXISTS updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        ADD COLUMN IF NOT EXISTS updated_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        ADD COLUMN IF NOT EXISTS update_count INTEGER      NOT NULL DEFAULT 0;
+    ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS created_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        ADD COLUMN IF NOT EXISTS updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        ADD COLUMN IF NOT EXISTS updated_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        ADD COLUMN IF NOT EXISTS update_count INTEGER      NOT NULL DEFAULT 0;
+    ALTER TABLE cart_items
+        ADD COLUMN IF NOT EXISTS created_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        ADD COLUMN IF NOT EXISTS updated_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        ADD COLUMN IF NOT EXISTS update_count INTEGER      NOT NULL DEFAULT 0;
+    ALTER TABLE announcements
+        ADD COLUMN IF NOT EXISTS created_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        ADD COLUMN IF NOT EXISTS updated_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
+        ADD COLUMN IF NOT EXISTS update_count INTEGER      NOT NULL DEFAULT 0;
+""");
+Console.WriteLine("✔ 稽核欄位就緒（created_by / updated_at / updated_by / update_count）\n正在插入種子資料...");
 
 // ── Step 3：種子資料 ────────────────────────────────────────────────
 await Execute(db, """

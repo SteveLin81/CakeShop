@@ -46,4 +46,24 @@ public class CakeShopDbContext : DbContext
 
         builder.Entity<Announcement>(e => e.HasKey(a => a.Id));
     }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
+        {
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.CreatedAt = now;
+                    entry.Entity.UpdatedAt = now;
+                    break;
+                case EntityState.Modified:
+                    entry.Entity.UpdatedAt = now;
+                    entry.Entity.UpdateCount++;
+                    break;
+            }
+        }
+        return base.SaveChangesAsync(cancellationToken);
+    }
 }

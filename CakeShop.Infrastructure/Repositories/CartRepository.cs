@@ -23,15 +23,12 @@ public class CartRepository : ICartRepository
 
     public async Task AddItemAsync(CartItem item)
     {
-        item.CreatedAt = DateTime.UtcNow;
-        item.UpdatedAt = DateTime.UtcNow;
         _ctx.CartItems.Add(item);
         await _ctx.SaveChangesAsync();
     }
 
     public async Task UpdateItemAsync(CartItem item)
     {
-        item.UpdatedAt = DateTime.UtcNow;
         _ctx.CartItems.Update(item);
         await _ctx.SaveChangesAsync();
     }

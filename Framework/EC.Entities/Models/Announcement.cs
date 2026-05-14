@@ -1,6 +1,6 @@
 namespace EC.Entities.Models;
 
-public class Announcement
+public class Announcement : AuditableEntity
 {
     public int Id { get; set; }
     public string Content { get; set; } = string.Empty;
@@ -12,6 +12,4 @@ public class Announcement
     public string? ContentVi { get; set; }
     public string? ContentMs { get; set; }
     public bool IsActive { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
 }
