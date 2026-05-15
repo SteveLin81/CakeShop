@@ -12,6 +12,7 @@ public class CakeShopDbContext : DbContext
     public DbSet<User>         Users         => Set<User>();
     public DbSet<CartItem>     CartItems     => Set<CartItem>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<B2eUser>      B2eUsers      => Set<B2eUser>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -45,6 +46,13 @@ public class CakeShopDbContext : DbContext
         });
 
         builder.Entity<Announcement>(e => e.HasKey(a => a.Id));
+
+        builder.Entity<B2eUser>(e =>
+        {
+            e.HasKey(u => u.Id);
+            e.ToTable("b2e_users");
+            e.HasIndex(u => u.Username).IsUnique();
+        });
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

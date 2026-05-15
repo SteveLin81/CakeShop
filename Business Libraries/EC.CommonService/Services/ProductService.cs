@@ -48,7 +48,7 @@ public class ProductService : IProductService
         });
     }
 
-    private static ProductDto MapToDto(Product p) => new()
+    internal static ProductDto MapToDto(Product p) => new()
     {
         Id = p.Id,
         Name = p.Name,

@@ -17,4 +17,32 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByIdAsync(int id)
         => await _ctx.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+
+    public async Task<IEnumerable<User>> GetAllAsync()
+        => await _ctx.Users.AsNoTracking()
+               .OrderByDescending(u => u.CreatedAt).ToListAsync();
+
+    public async Task<User> CreateAsync(User user)
+    {
+        _ctx.Users.Add(user);
+        await _ctx.SaveChangesAsync();
+        return user;
+    }
+
+    public async Task<User> UpdateAsync(User user)
+    {
+        _ctx.Users.Update(user);
+        await _ctx.SaveChangesAsync();
+        return user;
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var user = await _ctx.Users.FindAsync(id);
+        if (user is not null)
+        {
+            _ctx.Users.Remove(user);
+            await _ctx.SaveChangesAsync();
+        }
+    }
 }

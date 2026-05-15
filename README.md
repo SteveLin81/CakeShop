@@ -32,7 +32,7 @@
 
 ## 專案架構
 
-Solution 依用途分為五個 Solution Folder：
+Solution 依用途分為六個 Solution Folder：
 
 ```
 CakeShop/
@@ -62,6 +62,34 @@ CakeShop/
 │               ├── api.js                      # API 呼叫封裝
 │               └── common.js                   # 共用 Vue Composition（語言、驗證、購物車、公告）
 │
+├── 📁 _B2E/                                    ← Solution Folder：B2E 後台管理系統
+│   └── EC.B2E/                                 # 後台入口層（Razor Pages + Web API）
+│       ├── Pages/                              # Razor Pages（需 B2E Token）
+│       │   ├── Admin/
+│       │   │   ├── _AdminLayout.cshtml         # 後台共用 Layout（側邊欄、頂欄、語言切換）
+│       │   │   ├── Dashboard.cshtml / .cs      # 儀表板（統計數字、快速連結）
+│       │   │   ├── Products.cshtml / .cs       # 商品管理（8語系 CRUD）
+│       │   │   ├── Announcements.cshtml / .cs  # 公告管理（啟用切換 + CRUD）
+│       │   │   └── Users.cshtml / .cs          # B2C 帳號管理（CRUD）
+│       │   ├── Login.cshtml / .cs              # 登入頁（獨立 Layout）
+│       │   ├── _ViewImports.cshtml
+│       │   └── _ViewStart.cshtml
+│       ├── Controllers/
+│       │   ├── B2eAuthController.cs            # POST login / validate
+│       │   ├── B2eProductController.cs         # 商品 CRUD + 分類查詢
+│       │   ├── B2eAnnouncementController.cs    # 公告 CRUD + PATCH activate
+│       │   └── B2eUserController.cs            # B2C 帳號 CRUD
+│       ├── Filters/
+│       │   └── B2eAuthFilter.cs                # IAsyncActionFilter：Bearer Token 驗證
+│       ├── Program.cs                          # DI 註冊、B2E 服務、Swagger（Bearer auth）
+│       ├── appsettings.json                    # Port 5200、ConnectionStrings（同 B2C DB）
+│       └── wwwroot/                            # 靜態資源
+│           ├── css/b2e.css                     # 後台樣式（深藍灰側邊欄 + 藍色 Accent）
+│           └── js/
+│               ├── b2e-i18n.js                 # 8 語系後台翻譯字典
+│               ├── b2e-api.js                  # 封裝 /api/b2e/* 呼叫（自動帶 Token）
+│               └── b2e-common.js               # useB2eCommon()：Auth Guard / Toast / 語言切換
+│
 ├── 📁 _API/                                    ← Solution Folder：對外查詢 API
 │   └── EC.API/                                 # 外部 RESTful 查詢 API
 │       ├── Controllers/
@@ -86,11 +114,15 @@ CakeShop/
 │   └── EC.CommonService/
 │       └── Services/
 │           ├── EncryptionService.cs            # SHA-256 雜湊 + AES-256-GCM 加解密
-│           ├── AuthService.cs                  # 登入驗證、Token 產生
+│           ├── AuthService.cs                  # B2C 登入驗證、Token 產生
+│           ├── B2eAuthService.cs               # B2E 管理員登入驗證、Token 產生
 │           ├── ProductService.cs               # 商品查詢邏輯
+│           ├── ProductManagementService.cs     # 商品 CRUD（供 B2E 後台）
 │           ├── CartService.cs                  # 購物車操作邏輯
 │           ├── ContactService.cs               # 聯絡表單處理
-│           └── AnnouncementService.cs          # 置頂公告（從 DB 讀取）
+│           ├── AnnouncementService.cs          # 置頂公告查詢（B2C 使用）
+│           ├── AnnouncementManagementService.cs# 公告 CRUD + 啟用切換（供 B2E 後台）
+│           └── B2cUserManagementService.cs     # B2C 帳號 CRUD（供 B2E 後台）
 │
 ├── 📁 Framework/                               ← Solution Folder：基礎架構
 │   └── EC.Entities/                            # Domain 實體層（無任何外部相依）
@@ -98,6 +130,7 @@ CakeShop/
 │           ├── Product.cs
 │           ├── Category.cs
 │           ├── User.cs
+│           ├── B2eUser.cs                      # B2E 管理員帳號實體（獨立資料表）
 │           ├── CartItem.cs
 │           └── Announcement.cs
 │
@@ -107,33 +140,41 @@ CakeShop/
 │   │   ├── CartDto.cs
 │   │   ├── LoginRequest.cs / LoginResponse.cs
 │   │   ├── ContactFormDto.cs
-│   │   └── AnnouncementDto.cs
+│   │   ├── AnnouncementDto.cs
+│   │   └── B2eDto.cs                          # B2E 專用 DTO（ApiResult<T> / B2cUserDto / CRUD Request）
 │   └── Interfaces/
 │       ├── IEncryptionService.cs
 │       ├── IAuthService.cs / IProductService.cs / ICartService.cs
 │       ├── IContactService.cs / IAnnouncementService.cs
+│       ├── IB2eAuthService.cs                 # B2E 認證介面
+│       ├── IB2eUserRepository.cs              # B2E 管理員 Repository 介面
+│       ├── IProductManagementService.cs       # 商品 CRUD 介面（B2E 用）
+│       ├── IAnnouncementManagementService.cs  # 公告 CRUD 介面（B2E 用）
+│       ├── IB2cUserManagementService.cs       # B2C 帳號 CRUD 介面（B2E 用）
 │       ├── IProductRepository.cs / IUserRepository.cs
 │       └── ICartRepository.cs / IAnnouncementRepository.cs
 │
 ├── CakeShop.Infrastructure/                    # 資料存取層（EF Core）
 │   ├── Data/
-│   │   ├── CakeShopDbContext.cs                # EF Core DbContext
+│   │   ├── CakeShopDbContext.cs                # EF Core DbContext（含 B2eUsers DbSet）
 │   │   └── DesignTimeDbContextFactory.cs       # 供 dotnet ef 使用
 │   └── Repositories/
-│       ├── ProductRepository.cs
-│       ├── UserRepository.cs
+│       ├── ProductRepository.cs               # 含 B2E CRUD 方法擴充
+│       ├── UserRepository.cs                  # 含 B2E CRUD 方法擴充
 │       ├── CartRepository.cs
-│       └── AnnouncementRepository.cs
+│       ├── AnnouncementRepository.cs          # 含 B2E CRUD 方法擴充
+│       └── B2eUserRepository.cs               # B2E 管理員帳號查詢
 │
 └── CakeShop.DbSetup/                           # 資料庫初始化工具
-    └── Program.cs                              # 建立 DB、資料表、種子資料
+    └── Program.cs                              # 建立 DB、6 張資料表、種子資料（含 b2e_users）
 ```
 
 ### 命名空間對應
 
 | 專案 | 命名空間 | 職責 |
 |------|---------|------|
-| `EC.B2C` | `EC.B2C.Pages` / `EC.B2C.Controllers` | Razor Pages 頁面 + Web API 端點 |
+| `EC.B2C` | `EC.B2C.Pages` / `EC.B2C.Controllers` | B2C 消費者網站：Razor Pages + Web API |
+| `EC.B2E` | `EC.B2E.Pages` / `EC.B2E.Controllers` | B2E 後台管理：Razor Pages + 管理 API |
 | `EC.API` | `EC.API.Controllers` | 對外查詢 RESTful API |
 | `EC.Test` | `EC.Test.Services` | 單元測試（xUnit + Moq） |
 | `EC.CommonService` | `EC.CommonService.Services` | 商業邏輯實作 |
@@ -144,37 +185,36 @@ CakeShop/
 ### 請求流程與專案依賴
 
 ```
-瀏覽器                    外部呼叫端
-  │                          │
-  ▼                          ▼
-EC.B2C (Port 5000)      EC.API (Port 5100)
-  │                          │
-  └──────────┬───────────────┘
-             ▼
-     EC.CommonService (Service)
-             │
-             ▼
-     CakeShop.Core (Interface)
-             │
-             ▼
-   CakeShop.Infrastructure (Repository)
-             │
-             ▼
-      DbContext ─▶ PostgreSQL
+瀏覽器（消費者）      管理員瀏覽器       外部呼叫端
+      │                   │                 │
+      ▼                   ▼                 ▼
+EC.B2C (Port 5000)  EC.B2E (Port 5200)  EC.API (Port 5100)
+      │                   │                 │
+      └──────────┬─────────┘                │
+                 └──────────────────────────┘
+                           │
+                   EC.CommonService (Service)
+                           │
+                   CakeShop.Core (Interface)
+                           │
+                 CakeShop.Infrastructure (Repository)
+                           │
+                    DbContext ─▶ PostgreSQL
 
 專案依賴方向：
-EC.B2C / EC.API ──▶ EC.CommonService ──▶ CakeShop.Core ◀── CakeShop.Infrastructure
-       │                                        │
-       └────────────────────────────────────────┴──▶ EC.Entities（所有層共享實體定義）
+EC.B2C / EC.B2E / EC.API ──▶ EC.CommonService ──▶ CakeShop.Core ◀── CakeShop.Infrastructure
+       │                                                 │
+       └─────────────────────────────────────────────────┴──▶ EC.Entities（所有層共享實體定義）
 ```
 
-- **EC.B2C**：Razor Pages 負責頁面渲染（共用 Layout），Controllers 負責 Web API；Vue 3 處理前端互動
-- **EC.API**：對外查詢 API，Swagger UI 預設顯示於根路徑
+- **EC.B2C**：消費者網站，Razor Pages + Vue 3；登入 / 購物車 / 商品瀏覽
+- **EC.B2E**：管理員後台，深藍灰側邊欄；商品 CRUD / 公告管理 / B2C 帳號管理
+- **EC.API**：對外唯讀查詢 API，Swagger UI 預設顯示於根路徑
 - **EC.Test**：單元測試，使用 Moq 隔離外部相依
-- **EC.CommonService**：實作商業邏輯，依賴 `CakeShop.Core` 介面
+- **EC.CommonService**：B2C / B2E 共享商業邏輯，依賴 `CakeShop.Core` 介面
 - **EC.Entities**：純 Domain Model，不依賴任何其他專案
 - **CakeShop.Core**：介面與 DTO 定義層，依賴 `EC.Entities`
-- **CakeShop.Infrastructure**：EF Core Repository 實作，依賴 `CakeShop.Core` 與 `EC.Entities`
+- **CakeShop.Infrastructure**：EF Core Repository 實作，B2E CRUD 方法在此擴充
 
 ---
 
@@ -190,7 +230,7 @@ EC.B2C / EC.API ──▶ EC.CommonService ──▶ CakeShop.Core ◀── Cak
 
 ### 連線字串
 
-位於 `_B2C/EC.B2C/appsettings.json`：
+EC.B2C、EC.B2E、EC.API 共用同一個 PostgreSQL 資料庫，連線字串位於各專案的 `appsettings.json`：
 
 ```json
 {
@@ -215,8 +255,8 @@ $env:ConnectionStrings__Default = "Host=...;Port=5432;Database=TESTDB;..."
 執行 `CakeShop.DbSetup` 工具，自動完成：
 1. 建立 PostgreSQL 使用者 `testdb0101`（若不存在）
 2. 建立資料庫 `TESTDB`
-3. 建立 5 張資料表
-4. 插入種子資料（10 商品、6 分類、預設帳號、公告）
+3. 建立 **6 張資料表**（含 `b2e_users`）
+4. 插入種子資料（10 商品、6 分類、B2C 預設帳號、B2E 管理員帳號、公告）
 
 ```bash
 cd CakeShop.DbSetup
@@ -226,17 +266,16 @@ dotnet run
 ### 資料表結構
 
 > 欄位命名規則：DB 使用 `snake_case`，C# Model 使用 `PascalCase`，由 `EFCore.NamingConventions` 自動對應。  
-> 所有資料表皆繼承 `AuditableEntity`，包含 5 個共用稽核欄位（見下方）。  
-> 語系欄位（`_th` / `_ko` / `_vi` / `_ms`）及稽核欄位均以 `ALTER TABLE ADD COLUMN IF NOT EXISTS` 新增，可安全重複執行。
+> 所有資料表皆繼承 `AuditableEntity`，包含 5 個共用稽核欄位（見下方）。
 
 #### 共用稽核欄位（所有資料表）
 
 | 欄位 | 型別 | 說明 |
 |------|------|------|
 | `created_at` | `TIMESTAMPTZ NOT NULL DEFAULT NOW()` | 建立時間，由 DbContext 自動填寫 |
-| `created_by` | `VARCHAR(100) NOT NULL DEFAULT 'admin'` | 建立者，預設 `admin` |
+| `created_by` | `VARCHAR(100) NOT NULL DEFAULT 'admin'` | 建立者，B2E 操作時記錄管理員帳號 |
 | `updated_at` | `TIMESTAMPTZ NOT NULL DEFAULT NOW()` | 更新時間，每次 SaveChanges 自動更新 |
-| `updated_by` | `VARCHAR(100) NOT NULL DEFAULT 'admin'` | 更新者，預設 `admin` |
+| `updated_by` | `VARCHAR(100) NOT NULL DEFAULT 'admin'` | 更新者，B2E 操作時記錄管理員帳號 |
 | `update_count` | `INTEGER NOT NULL DEFAULT 0` | 更新次數，每次 Modified 自動遞增 |
 
 #### categories
@@ -259,28 +298,15 @@ dotnet run
 |------|------|------|
 | `id` | `SERIAL PK` | |
 | `name` | `VARCHAR(100)` | 繁體中文名稱 |
-| `name_en` | `VARCHAR(100)` | English |
-| `name_ja` | `VARCHAR(100)` | 日本語 |
-| `name_zh_cn` | `VARCHAR(100)` | 简体中文 |
-| `name_th` | `VARCHAR(100)` | ภาษาไทย |
-| `name_ko` | `VARCHAR(100)` | 한국어 |
-| `name_vi` | `VARCHAR(100)` | Tiếng Việt |
-| `name_ms` | `VARCHAR(100)` | Bahasa Melayu |
+| `name_en` … `name_ms` | `VARCHAR(100)` | 其餘 7 語系名稱 |
 | `description` | `TEXT` | 繁體中文描述 |
-| `description_en` | `TEXT` | English |
-| `description_ja` | `TEXT` | 日本語 |
-| `description_zh_cn` | `TEXT` | 简体中文 |
-| `description_th` | `TEXT` | ภาษาไทย |
-| `description_ko` | `TEXT` | 한국어 |
-| `description_vi` | `TEXT` | Tiếng Việt |
-| `description_ms` | `TEXT` | Bahasa Melayu |
+| `description_en` … `description_ms` | `TEXT` | 其餘 7 語系描述 |
 | `price` | `NUMERIC(10,2)` | 售價（NT$） |
 | `image_url` | `VARCHAR(500)` | 商品圖片 URL |
 | `category_id` | `INTEGER FK` | 參照 `categories.id` |
-| `is_available` | `BOOLEAN` | 是否上架 |
-| `created_at` … `update_count` | — | 共用稽核欄位（見上方說明） |
+| `is_available` | `BOOLEAN` | 是否上架（B2E 可切換） |
 
-#### users
+#### users（B2C 消費者帳號）
 
 | 欄位 | 型別 | 說明 |
 |------|------|------|
@@ -288,7 +314,17 @@ dotnet run
 | `username` | `VARCHAR(50) UNIQUE` | 帳號（唯一） |
 | `password_hash` | `VARCHAR(255)` | SHA-256(password + salt) → Base64 |
 | `email` | `VARCHAR(100)` | |
-| `created_at` … `update_count` | — | 共用稽核欄位 |
+
+#### b2e_users（B2E 管理員帳號）
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| `id` | `SERIAL PK` | |
+| `username` | `VARCHAR(50) UNIQUE` | 管理員帳號（唯一，與 B2C users 完全獨立） |
+| `password_hash` | `VARCHAR(255)` | 同 B2C 雜湊格式 |
+| `email` | `VARCHAR(100)` | |
+
+> `b2e_users` 與 `users` 為**獨立資料表**，帳號體系完全分離；B2E Token 也獨立於 B2C Token 之外。
 
 #### cart_items
 
@@ -298,7 +334,6 @@ dotnet run
 | `session_id` | `VARCHAR(100)` | 對應登入帳號名稱（已登入才可操作） |
 | `product_id` | `INTEGER FK` | 參照 `products.id`（CASCADE DELETE） |
 | `quantity` | `INTEGER` | 數量（> 0） |
-| `created_at` … `update_count` | — | 共用稽核欄位 |
 
 #### announcements
 
@@ -306,45 +341,19 @@ dotnet run
 |------|------|------|
 | `id` | `SERIAL PK` | |
 | `content` | `TEXT` | 繁體中文公告 |
-| `content_en` | `TEXT` | English |
-| `content_ja` | `TEXT` | 日本語 |
-| `content_zh_cn` | `TEXT` | 简体中文 |
-| `content_th` | `TEXT` (nullable) | ภาษาไทย（為空時退回英文） |
-| `content_ko` | `TEXT` (nullable) | 한국어（為空時退回英文） |
-| `content_vi` | `TEXT` (nullable) | Tiếng Việt（為空時退回英文） |
-| `content_ms` | `TEXT` (nullable) | Bahasa Melayu（為空時退回英文） |
-| `is_active` | `BOOLEAN` | 是否啟用 |
-| `created_at` … `update_count` | — | 共用稽核欄位 |
+| `content_en` … `content_ms` | `TEXT` (nullable) | 其餘 7 語系（為空時退回英文） |
+| `is_active` | `BOOLEAN` | 是否啟用（同時只有 1 筆啟用，B2E 可切換） |
 
 ### EF Core Migrations
 
-專案使用 **EF Core Migrations** 管理 Schema 版本。首次在全新環境部署時：
-
 ```bash
-# 1. 確認資料庫已存在（執行 DbSetup 或手動建立）
-# 2. 套用所有 Pending Migrations（在 solution 根目錄執行）
+# 套用所有 Pending Migrations（在 solution 根目錄執行）
 dotnet ef database update \
   --project CakeShop.Infrastructure \
   --startup-project _B2C/EC.B2C
-```
 
-**新增資料表或欄位變更時：**
-
-```bash
-# 在 solution 根目錄執行
+# 新增 Migration
 dotnet ef migrations add <MigrationName> \
-  --project CakeShop.Infrastructure \
-  --startup-project _B2C/EC.B2C
-
-dotnet ef database update \
-  --project CakeShop.Infrastructure \
-  --startup-project _B2C/EC.B2C
-```
-
-**檢視 Migration 狀態：**
-
-```bash
-dotnet ef migrations list \
   --project CakeShop.Infrastructure \
   --startup-project _B2C/EC.B2C
 ```
@@ -368,19 +377,25 @@ dotnet restore
 dotnet build
 ```
 
-### 3. 啟動 B2C 網站
+### 3. 啟動 B2C 消費者網站
 
 ```bash
 cd _B2C/EC.B2C
 dotnet run
 ```
 
-伺服器預設監聽 **http://localhost:5000**，啟動時會顯示：
-```
-✔ 資料庫連線成功（TESTDB）
+伺服器監聽 **http://localhost:5000**
+
+### 4. 啟動 B2E 後台管理系統
+
+```bash
+cd _B2E/EC.B2E
+dotnet run
 ```
 
-### 4. 啟動對外 API（選用）
+伺服器監聽 **http://localhost:5200**
+
+### 5. 啟動對外 API（選用）
 
 ```bash
 cd _API/EC.API
@@ -389,17 +404,20 @@ dotnet run
 
 伺服器監聽 **http://localhost:5100**，根路徑直接顯示 Swagger UI。
 
-### 5. 開啟網站
+### 6. 開啟網站
 
 | 頁面 | 網址 |
 |------|------|
-| 首頁 | http://localhost:5000 |
-| 商品頁 | http://localhost:5000/Products |
-| 聯絡我們 | http://localhost:5000/Contact |
+| B2C 首頁 | http://localhost:5000 |
+| B2C 商品頁 | http://localhost:5000/Products |
+| B2C 聯絡我們 | http://localhost:5000/Contact |
 | B2C Swagger UI | http://localhost:5000/swagger |
+| **B2E 登入頁** | **http://localhost:5200/b2e/login** |
+| **B2E 儀表板** | **http://localhost:5200/b2e/admin** |
+| **B2E Swagger UI** | **http://localhost:5200/swagger** |
 | EC.API Swagger UI | http://localhost:5100 |
 
-### 6. 執行單元測試
+### 7. 執行單元測試
 
 ```bash
 cd _Test/EC.Test
@@ -415,25 +433,35 @@ dotnet test
 
 ## 預設帳號
 
+### B2C 消費者帳號
+
 | 欄位 | 值 |
 |------|----|
 | 帳號 | `test` |
 | 密碼 | `test` |
 
-> 密碼以 `SHA-256(password + salt)` 雜湊後存於 DB；登入後返回的 Token 以 AES-256-GCM 加密。
+### B2E 管理員帳號
+
+| 欄位 | 值 |
+|------|----|
+| 帳號 | `testb2e` |
+| 密碼 | `testb2e` |
+| 登入頁 | http://localhost:5200/b2e/login |
+
+> 兩組帳號使用相同的 `SHA-256(password + salt)` 雜湊機制，但儲存於完全獨立的資料表；Token 加密格式相同（AES-256-GCM），但驗證邏輯獨立，彼此無法互用。
 
 ---
 
 ## API 端點一覽
 
-### EC.B2C（Port 5000）— 含認證與購物車
+### EC.B2C（Port 5000）— 消費者 API
 
 #### 認證
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
-| POST | `/api/auth/login` | 登入，回傳 AES-256-GCM 加密 Token |
-| POST | `/api/auth/validate` | 驗證 Token 是否有效 |
+| POST | `/api/auth/login` | B2C 登入，回傳 AES-256-GCM Token |
+| POST | `/api/auth/validate` | 驗證 B2C Token |
 
 #### 商品
 
@@ -454,14 +482,60 @@ dotnet test
 | DELETE | `/api/cart/{sessionId}/items/{itemId}` | 移除單項商品 |
 | DELETE | `/api/cart/{sessionId}` | 清空購物車 |
 
-> `sessionId` 使用登入帳號名稱（如 `test`），確保購物車資料綁定帳號。
-
 #### 聯絡 / 公告
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
 | POST | `/api/contact` | 提交聯絡表單 |
 | GET | `/api/announcement` | 取得啟用中的置頂公告（從 DB 讀取） |
+
+---
+
+### EC.B2E（Port 5200）— 後台管理 API
+
+所有 `/api/b2e/*` 端點（auth 除外）均需在 `Authorization` Header 帶入 B2E Token：
+```
+Authorization: Bearer <b2eToken>
+```
+
+#### 認證
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| POST | `/api/b2e/auth/login` | B2E 管理員登入，回傳 Token |
+| POST | `/api/b2e/auth/validate` | 驗證 B2E Token 是否有效 |
+
+#### 商品管理
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| GET | `/api/b2e/products` | 取得全部商品 |
+| GET | `/api/b2e/products/{id}` | 取得單一商品 |
+| GET | `/api/b2e/products/categories` | 取得分類列表 |
+| POST | `/api/b2e/products` | 新增商品（8 語系） |
+| PUT | `/api/b2e/products/{id}` | 修改商品 |
+| DELETE | `/api/b2e/products/{id}` | 刪除商品 |
+
+#### 公告管理
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| GET | `/api/b2e/announcements` | 取得所有公告 |
+| GET | `/api/b2e/announcements/{id}` | 取得單一公告 |
+| POST | `/api/b2e/announcements` | 新增公告（8 語系） |
+| PUT | `/api/b2e/announcements/{id}` | 修改公告 |
+| DELETE | `/api/b2e/announcements/{id}` | 刪除公告 |
+| PATCH | `/api/b2e/announcements/{id}/activate` | 啟用指定公告（其餘自動停用） |
+
+#### B2C 帳號管理
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| GET | `/api/b2e/users` | 取得所有 B2C 帳號 |
+| GET | `/api/b2e/users/{id}` | 取得單一 B2C 帳號 |
+| POST | `/api/b2e/users` | 新增 B2C 帳號 |
+| PUT | `/api/b2e/users/{id}` | 修改 B2C 帳號（Email / 密碼） |
+| DELETE | `/api/b2e/users/{id}` | 刪除 B2C 帳號 |
 
 ---
 
@@ -488,16 +562,14 @@ Swagger UI 位於根路徑：**http://localhost:5100**
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
-| GET | `/api/members/{username}` | 依帳號查詢會員（回傳 Id / Username / Email / CreatedAt） |
-| GET | `/api/members/id/{id}` | 依 ID 查詢會員 |
-
-> 會員端點回傳安全欄位（不含 PasswordHash）。
+| GET | `/api/members/{username}` | 依帳號查詢 B2C 會員（不含 PasswordHash） |
+| GET | `/api/members/id/{id}` | 依 ID 查詢 B2C 會員 |
 
 ---
 
 ## 前端架構
 
-### Razor Pages + Vue 3 混合模式
+### B2C：Razor Pages + Vue 3 混合模式
 
 ```
 瀏覽器請求
@@ -505,33 +577,47 @@ Swagger UI 位於根路徑：**http://localhost:5100**
   ▼
 Razor Pages（Server-side）
   ├── _Layout.cshtml  ─── 共用結構：Navbar、公告Bar、Footer、購物車抽屜、登入 Modal
-  ├── Index.cshtml    ─── 首頁模板（Hero、輪播、精選商品）
+  ├── Index.cshtml    ─── 首頁模板
   ├── Products.cshtml ─── 商品頁模板
   └── Contact.cshtml  ─── 聯絡頁模板
           │
           ▼（嵌入 Vue 3 Client-side）
       Vue createApp 掛載 #app
-          ├── common.js  ─── useCommonSetup()：語言/驗證/購物車/公告（所有頁面共用）
+          ├── common.js  ─── useCommonSetup()：語言 / 驗證 / 購物車 / 公告
           ├── api.js     ─── 封裝所有後端 API 呼叫
           └── i18n.js    ─── 8 語系翻譯字典
 ```
 
-- **Razor Pages** 負責 HTML 結構輸出（Server-side），`_Layout.cshtml` 確保所有頁面共享相同的 Navbar 與公告 Bar
-- **Vue 3** 負責前端互動（Client-side）：語言切換、購物車、登入/登出、商品篩選等
-- **`@@click`**：`.cshtml` 中 Vue 事件指令須以 `@@` 轉義 Razor 的 `@` 符號
+### B2E：Razor Pages + Vue 3 + Element Plus 後台
 
-### 前端功能
+```
+瀏覽器請求（需 B2E Token）
+  │
+  ▼
+Razor Pages（Server-side）
+  ├── Login.cshtml        ─── 獨立登入頁
+  └── Admin/_AdminLayout.cshtml ─── 後台共用 Layout
+      ├── 深藍灰側邊欄（Dashboard / Products / Announcements / Users）
+      ├── 頂欄（語言切換 / 管理員帳號 / 登出）
+      └── @RenderBody()
+              │
+              ▼（@section Scripts 嵌入 Vue 3 + Element Plus）
+          各管理頁 createApp
+              ├── b2e-common.js  ─── useB2eCommon()：Auth Guard / Toast / 語言切換
+              ├── b2e-api.js     ─── 封裝 /api/b2e/* 呼叫（自動帶 b2eToken）
+              └── b2e-i18n.js    ─── 8 語系後台翻譯字典
+```
+
+**B2E 前端功能**
 
 | 功能 | 說明 |
 |------|------|
-| 多語系 | 繁中 / 简中 / English / 日本語 / ภาษาไทย / 한국어 / Tiếng Việt / Bahasa Melayu，語系存入 `localStorage` |
-| 多語系實作 | `i18n.js` 含 8 語系 UI 翻譯；商品名稱 / 描述 / 分類 / 公告均存於 DB 多語系欄位，`api.js` 依 locale 查表取值 |
-| 登入 | Modal 彈窗，AES-GCM Token 存入 `localStorage` |
-| 購物車 | 需登入；資料綁定帳號；登出自動清空 |
-| 首頁輪播 | 商品倒排取 4 項，每 4 秒自動切換 |
-| 置頂公告 | `_Layout.cshtml` 共用，每頁皆顯示；從 `GET /api/announcement` 取得，支援 8 語系 |
-| Loading 動畫 | 頁面切換顯示深綠 Loading Screen |
-| RWD | 手機、平板、桌機全支援 |
+| 認證 Guard | `useB2eCommon().checkAuth()` 在每頁 `onMounted` 驗證 Token，失效即跳轉 `/b2e/login` |
+| 商品管理 | `el-table` 列表、`el-dialog` + `el-tabs` 新增/編輯（8語言分頁）、`el-popconfirm` 刪除 |
+| 公告管理 | 同上，另有啟用切換按鈕（啟用後其他公告自動停用） |
+| 帳號管理 | B2C 消費者帳號的新增 / 修改 Email 及密碼 / 刪除 |
+| 多語系 | 8 種語言切換（`b2e-i18n.js`），語系存入 `localStorage['b2eLocale']` |
+| Token 儲存 | `localStorage['b2eToken']`、`localStorage['b2eUsername']`（與 B2C Token 獨立） |
 
 ---
 
@@ -557,13 +643,13 @@ Razor Pages（Server-side）
 ## 加密機制
 
 ```
-密碼儲存：SHA-256( password + "CakeShopPasswordSalt@2024" ) → Base64 → 存入 users.password_hash
+密碼儲存：SHA-256( password + "CakeShopPasswordSalt@2024" ) → Base64 → 存入 users.password_hash / b2e_users.password_hash
 Token 格式：AES-256-GCM 加密的 "userId|username|expiresAt"
 Token 結構：nonce(12 bytes) | tag(16 bytes) | ciphertext  → Base64
 ```
 
-密鑰由 `MasterSecret` 字串經 SHA-256 推導（32 bytes = AES-256 key size）。  
-實際部署時應將 `MasterSecret` 改為環境變數注入。
+B2C 與 B2E 使用相同的加密格式，但 Token 分別由各自的 `AuthService` / `B2eAuthService` 產生與驗證，不可互用。  
+密鑰由 `MasterSecret` 字串經 SHA-256 推導（32 bytes = AES-256 key size）；實際部署時應改為環境變數注入。
 
 ---
 
@@ -600,6 +686,7 @@ dotnet test _Test/EC.Test
 - [x] 建立 EC.Test 單元測試專案（61 個測試全數通過）
 - [x] 靜態 HTML 改為 Razor Pages（`_Layout.cshtml` 共用 Navbar 與公告 Bar）
 - [x] 新增 `AuditableEntity` 稽核基底類別（建立/更新時間、建立/更新者、更新次數）
+- [x] 新增 EC.B2E 後台管理系統（Port 5200）：商品 / 公告 / B2C 帳號 CRUD，8 語系介面，獨立管理員帳號
 - [ ] 使用環境變數管理加密金鑰與連線字串
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）

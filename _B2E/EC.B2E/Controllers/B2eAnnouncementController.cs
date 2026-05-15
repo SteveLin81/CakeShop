@@ -1,0 +1,72 @@
+using CakeShop.Core.DTOs;
+using CakeShop.Core.Interfaces;
+using EC.B2E.Filters;
+using Microsoft.AspNetCore.Mvc;
+
+namespace EC.B2E.Controllers;
+
+[ApiController]
+[Route("api/b2e/announcements")]
+[ServiceFilter(typeof(B2eAuthFilter))]
+public class B2eAnnouncementController : ControllerBase
+{
+    private readonly IAnnouncementManagementService _mgmtSvc;
+
+    public B2eAnnouncementController(IAnnouncementManagementService mgmtSvc)
+        => _mgmtSvc = mgmtSvc;
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var list = await _mgmtSvc.GetAllAsync();
+        return Ok(ApiResult<IEnumerable<AnnouncementDto>>.Ok(list));
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var dto = await _mgmtSvc.GetByIdAsync(id);
+        if (dto is null) return NotFound(ApiResult<object>.Fail($"公告 {id} 不存在"));
+        return Ok(ApiResult<AnnouncementDto>.Ok(dto));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] AnnouncementSaveRequest request)
+    {
+        var op  = HttpContext.Items["b2e-username"]?.ToString() ?? "admin";
+        var dto = await _mgmtSvc.CreateAsync(request, op);
+        return CreatedAtAction(nameof(GetById), new { id = dto.Id },
+            ApiResult<AnnouncementDto>.Ok(dto, "公告新增成功"));
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] AnnouncementSaveRequest request)
+    {
+        var op = HttpContext.Items["b2e-username"]?.ToString() ?? "admin";
+        try
+        {
+            var dto = await _mgmtSvc.UpdateAsync(id, request, op);
+            return Ok(ApiResult<AnnouncementDto>.Ok(dto, "公告更新成功"));
+        }
+        catch (KeyNotFoundException ex) { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        await _mgmtSvc.DeleteAsync(id);
+        return Ok(ApiResult<object>.Ok(new { }, "公告刪除成功"));
+    }
+
+    [HttpPatch("{id:int}/activate")]
+    public async Task<IActionResult> Activate(int id)
+    {
+        var op = HttpContext.Items["b2e-username"]?.ToString() ?? "admin";
+        try
+        {
+            await _mgmtSvc.SetActiveAsync(id, op);
+            return Ok(ApiResult<object>.Ok(new { }, "已設為啟用公告"));
+        }
+        catch (KeyNotFoundException ex) { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+    }
+}

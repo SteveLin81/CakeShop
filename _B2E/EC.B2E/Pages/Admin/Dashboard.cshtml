@@ -1,0 +1,88 @@
+@page "/b2e/admin"
+@model DashboardModel
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "儀表板"; }
+
+<div class="b2e-page-header">
+  <div>
+    <div class="b2e-page-title">{{ t('dashboard.title') }}</div>
+    <div class="b2e-page-subtitle">{{ t('dashboard.welcome') }}，{{ adminUsername }}</div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="b2e-stats-grid">
+  <div class="b2e-stat-card">
+    <div class="b2e-stat-icon blue">🎂</div>
+    <div>
+      <div class="b2e-stat-number">{{ stats.products }}</div>
+      <div class="b2e-stat-label">{{ t('dashboard.totalProducts') }}</div>
+    </div>
+  </div>
+  <div class="b2e-stat-card">
+    <div class="b2e-stat-icon green">👥</div>
+    <div>
+      <div class="b2e-stat-number">{{ stats.users }}</div>
+      <div class="b2e-stat-label">{{ t('dashboard.totalUsers') }}</div>
+    </div>
+  </div>
+  <div class="b2e-stat-card">
+    <div class="b2e-stat-icon orange">📢</div>
+    <div>
+      <div class="b2e-stat-number">{{ stats.announcements }}</div>
+      <div class="b2e-stat-label">{{ t('dashboard.totalAnnouncements') }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick links -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:8px">
+  <a href="/b2e/admin/products" style="text-decoration:none">
+    <div class="b2e-card" style="padding:20px;cursor:pointer;transition:box-shadow .2s"
+         @@mouseenter="$event.target.style.boxShadow='0 4px 20px rgba(52,152,219,.2)'"
+         @@mouseleave="$event.target.style.boxShadow=''">
+      <div style="font-size:2rem;margin-bottom:8px">🎂</div>
+      <div style="font-weight:700;color:var(--b2e-primary)">{{ t('menu.products') }}</div>
+      <div style="font-size:.85rem;color:var(--b2e-muted);margin-top:4px">新增、編輯、刪除商品</div>
+    </div>
+  </a>
+  <a href="/b2e/admin/announcements" style="text-decoration:none">
+    <div class="b2e-card" style="padding:20px;cursor:pointer;transition:box-shadow .2s">
+      <div style="font-size:2rem;margin-bottom:8px">📢</div>
+      <div style="font-weight:700;color:var(--b2e-primary)">{{ t('menu.announcements') }}</div>
+      <div style="font-size:.85rem;color:var(--b2e-muted);margin-top:4px">管理置頂公告</div>
+    </div>
+  </a>
+  <a href="/b2e/admin/users" style="text-decoration:none">
+    <div class="b2e-card" style="padding:20px;cursor:pointer;transition:box-shadow .2s">
+      <div style="font-size:2rem;margin-bottom:8px">👥</div>
+      <div style="font-weight:700;color:var(--b2e-primary)">{{ t('menu.users') }}</div>
+      <div style="font-size:.85rem;color:var(--b2e-muted);margin-top:4px">管理 B2C 帳號</div>
+    </div>
+  </a>
+</div>
+
+@section Scripts {
+<script>
+const { createApp, ref, reactive, onMounted } = Vue;
+createApp({
+  setup() {
+    const common = useB2eCommon();
+    const stats  = reactive({ products: 0, users: 0, announcements: 0 });
+
+    onMounted(async () => {
+      await common.checkAuth();
+      try {
+        const [p, u, a] = await Promise.all([
+          b2eApi.getProducts(), b2eApi.getUsers(), b2eApi.getAnnouncements()
+        ]);
+        stats.products      = p.data?.length ?? 0;
+        stats.users         = u.data?.length ?? 0;
+        stats.announcements = a.data?.length ?? 0;
+      } catch {}
+    });
+
+    return { ...common, stats };
+  }
+}).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
+</script>
+}

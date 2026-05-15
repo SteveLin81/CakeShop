@@ -1,0 +1,90 @@
+@page "/b2e/login"
+@model LoginModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登入 – B2E 後台</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/b2e.css">
+</head>
+<body>
+<div id="b2e-login-app" v-cloak>
+  <div class="b2e-login-wrapper">
+    <div class="b2e-login-card">
+      <div class="b2e-login-logo">
+        <div class="icon">⚙️</div>
+        <h1>{{ t('auth.loginTitle') }}</h1>
+        <p>{{ t('auth.loginSub') }}</p>
+      </div>
+
+      <div class="b2e-form-group">
+        <label class="b2e-form-label">{{ t('auth.username') }}</label>
+        <input class="b2e-form-input" v-model="form.username" @@keyup.enter="doLogin"
+               :placeholder="t('auth.username')" autocomplete="username">
+        <div class="b2e-form-error" v-if="errors.username">{{ errors.username }}</div>
+      </div>
+      <div class="b2e-form-group">
+        <label class="b2e-form-label">{{ t('auth.password') }}</label>
+        <input class="b2e-form-input" type="password" v-model="form.password" @@keyup.enter="doLogin"
+               :placeholder="t('auth.password')" autocomplete="current-password">
+        <div class="b2e-form-error" v-if="errors.password">{{ errors.password }}</div>
+      </div>
+      <div class="b2e-form-error" style="margin-bottom:8px;text-align:center" v-if="errors.global">{{ errors.global }}</div>
+
+      <button class="b2e-login-btn" @@click="doLogin" :disabled="loading">
+        {{ loading ? t('common.loading') : t('auth.login') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/vue-i18n@9/dist/vue-i18n.global.prod.js"></script>
+<script src="/js/b2e-i18n.js"></script>
+<script src="/js/b2e-api.js"></script>
+<script src="/js/b2e-common.js"></script>
+<script>
+const { createApp, ref, onMounted } = Vue;
+
+createApp({
+  setup() {
+    const { t } = b2eI18n.global;
+    const form    = ref({ username: '', password: '' });
+    const errors  = ref({});
+    const loading = ref(false);
+
+    onMounted(() => {
+      // 若已登入則跳轉
+      const token = localStorage.getItem('b2eToken');
+      if (token) location.href = '/b2e/admin';
+    });
+
+    async function doLogin() {
+      errors.value = {};
+      if (!form.value.username) errors.value.username = t('auth.usernameReq');
+      if (!form.value.password) errors.value.password = t('auth.passwordReq');
+      if (Object.keys(errors.value).length) return;
+      loading.value = true;
+      try {
+        const res = await b2eApi.login(form.value.username, form.value.password);
+        if (res.success) {
+          localStorage.setItem('b2eToken',    res.token);
+          localStorage.setItem('b2eUsername', res.username);
+          location.href = '/b2e/admin';
+        } else {
+          errors.value.global = t('auth.loginFailed');
+        }
+      } catch { errors.value.global = 'Login error'; }
+      finally { loading.value = false; }
+    }
+
+    return { t, form, errors, loading, doLogin };
+  }
+}).use(b2eI18n).mount('#b2e-login-app');
+</script>
+</body>
+</html>

@@ -198,7 +198,22 @@ await Execute(db, """
     );
 """);
 
-Console.WriteLine("✔ 5 張資料表建立完成");
+// b2e_users（後台管理員帳號，獨立於 B2C users）
+await Execute(db, """
+    CREATE TABLE IF NOT EXISTS b2e_users (
+        id            SERIAL       PRIMARY KEY,
+        username      VARCHAR(50)  UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        email         VARCHAR(100) NOT NULL DEFAULT '',
+        created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        created_by    VARCHAR(100) NOT NULL DEFAULT 'system',
+        updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_by    VARCHAR(100) NOT NULL DEFAULT 'system',
+        update_count  INTEGER      NOT NULL DEFAULT 0
+    );
+""");
+
+Console.WriteLine("✔ 6 張資料表建立完成（含 b2e_users）");
 
 // ── Step 2b：新增多語系欄位（IF NOT EXISTS，安全重複執行）─────────────
 await Execute(db, """
@@ -400,6 +415,14 @@ await Execute(db, $"""
     ON CONFLICT (username) DO NOTHING;
 """);
 Console.WriteLine("  ✔ users（test / test）");
+
+var b2eHash = ComputeHash("testb2e");
+await Execute(db, $"""
+    INSERT INTO b2e_users (username, password_hash, email, created_by, updated_by)
+    VALUES ('testb2e', '{b2eHash}', 'admin@cakeshop.com', 'system', 'system')
+    ON CONFLICT (username) DO NOTHING;
+""");
+Console.WriteLine("  ✔ b2e_users（testb2e / testb2e）");
 
 await Execute(db, """
     INSERT INTO announcements (content,content_en,content_ja,content_zh_cn,content_th,content_ko,content_vi,content_ms,is_active)

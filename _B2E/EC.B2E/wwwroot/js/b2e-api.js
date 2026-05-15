@@ -1,0 +1,50 @@
+const B2E_API = '/api/b2e';
+
+const b2eApi = {
+  async request(method, url, body) {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = localStorage.getItem('b2eToken');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${B2E_API}${url}`, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    const text = await res.text();
+    if (!text) return { success: true };
+    return JSON.parse(text);
+  },
+
+  get:    (url)        => b2eApi.request('GET',    url),
+  post:   (url, body)  => b2eApi.request('POST',   url, body),
+  put:    (url, body)  => b2eApi.request('PUT',    url, body),
+  patch:  (url, body)  => b2eApi.request('PATCH',  url, body),
+  delete: (url)        => b2eApi.request('DELETE', url),
+
+  // ── 認證 ────────────────────────────────────────────────────────
+  login:         (username, password) => b2eApi.post('/auth/login', { username, password }),
+  validateToken: (token)              => b2eApi.post('/auth/validate', { token }),
+
+  // ── 商品 ────────────────────────────────────────────────────────
+  getProducts:     ()       => b2eApi.get('/products'),
+  getProduct:      (id)     => b2eApi.get(`/products/${id}`),
+  getCategories:   ()       => b2eApi.get('/products/categories'),
+  createProduct:   (data)   => b2eApi.post('/products', data),
+  updateProduct:   (id, d)  => b2eApi.put(`/products/${id}`, d),
+  deleteProduct:   (id)     => b2eApi.delete(`/products/${id}`),
+
+  // ── 公告 ────────────────────────────────────────────────────────
+  getAnnouncements:    ()      => b2eApi.get('/announcements'),
+  getAnnouncement:     (id)    => b2eApi.get(`/announcements/${id}`),
+  createAnnouncement:  (data)  => b2eApi.post('/announcements', data),
+  updateAnnouncement:  (id, d) => b2eApi.put(`/announcements/${id}`, d),
+  deleteAnnouncement:  (id)    => b2eApi.delete(`/announcements/${id}`),
+  activateAnnouncement:(id)    => b2eApi.patch(`/announcements/${id}/activate`),
+
+  // ── B2C 帳號 ─────────────────────────────────────────────────────
+  getUsers:    ()       => b2eApi.get('/users'),
+  getUser:     (id)     => b2eApi.get(`/users/${id}`),
+  createUser:  (data)   => b2eApi.post('/users', data),
+  updateUser:  (id, d)  => b2eApi.put(`/users/${id}`, d),
+  deleteUser:  (id)     => b2eApi.delete(`/users/${id}`),
+};

@@ -24,4 +24,30 @@ public class ProductRepository : IProductRepository
 
     public async Task<IEnumerable<Category>> GetCategoriesAsync()
         => await _ctx.Categories.AsNoTracking().ToListAsync();
+
+    public async Task<Product> CreateAsync(Product product)
+    {
+        _ctx.Products.Add(product);
+        await _ctx.SaveChangesAsync();
+        return product;
+    }
+
+    public async Task<Product> UpdateAsync(Product product)
+    {
+        _ctx.Products.Update(product);
+        await _ctx.SaveChangesAsync();
+        return await _ctx.Products.Include(p => p.Category)
+                         .AsNoTracking()
+                         .FirstAsync(p => p.Id == product.Id);
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var product = await _ctx.Products.FindAsync(id);
+        if (product is not null)
+        {
+            _ctx.Products.Remove(product);
+            await _ctx.SaveChangesAsync();
+        }
+    }
 }
