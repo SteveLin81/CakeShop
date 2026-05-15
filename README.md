@@ -19,11 +19,12 @@
 
 | 層次 | 技術 |
 |------|------|
-| 後端框架 | ASP.NET Core 8 Web API |
+| 後端框架 | ASP.NET Core 8 Web API + Razor Pages |
 | 語言 | C# 12 |
 | ORM | Entity Framework Core 8（Npgsql 驅動） |
 | 資料庫 | PostgreSQL 9.6+ |
 | 前端框架 | Vue 3（CDN）、Element Plus、Vue-i18n |
+| 頁面引擎 | ASP.NET Core Razor Pages（`_Layout.cshtml` 共用結構） |
 | 加密 | SHA-256 密碼雜湊 + AES-256-GCM Token |
 | API 文件 | Swagger / Swashbuckle |
 
@@ -37,19 +38,29 @@ Solution 依用途分為五個 Solution Folder：
 CakeShop/
 │
 ├── 📁 _B2C/                                    ← Solution Folder：B2C 消費者網站
-│   └── EC.B2C/                                 # 網站入口層（HTTP 輸入 / 呼叫 / 輸出）
+│   └── EC.B2C/                                 # 網站入口層（Razor Pages + Web API）
+│       ├── Pages/                              # Razor Pages
+│       │   ├── Shared/
+│       │   │   └── _Layout.cshtml              # 共用 Layout（Navbar、公告Bar、Footer）
+│       │   ├── _ViewImports.cshtml
+│       │   ├── _ViewStart.cshtml
+│       │   ├── Index.cshtml / .cs              # 首頁（Hero、輪播、精選商品）
+│       │   ├── Products.cshtml / .cs           # 商品頁（篩選、搜尋）
+│       │   └── Contact.cshtml / .cs            # 聯絡頁
 │       ├── Controllers/
 │       │   ├── AuthController.cs
 │       │   ├── ProductController.cs
 │       │   ├── CartController.cs
 │       │   ├── ContactController.cs
 │       │   └── AnnouncementController.cs
-│       ├── Program.cs                          # DI 註冊、DbContext、Swagger
+│       ├── Program.cs                          # DI 註冊、Razor Pages、DbContext、Swagger
 │       ├── appsettings.json                    # Port 5000、ConnectionStrings
-│       └── wwwroot/                            # 前端靜態頁面
-│           ├── index.html / products.html / contact.html
+│       └── wwwroot/                            # 靜態資源
 │           ├── css/style.css
-│           └── js/i18n.js / api.js
+│           └── js/
+│               ├── i18n.js                     # 8 語系翻譯字典
+│               ├── api.js                      # API 呼叫封裝
+│               └── common.js                   # 共用 Vue Composition（語言、驗證、購物車、公告）
 │
 ├── 📁 _API/                                    ← Solution Folder：對外查詢 API
 │   └── EC.API/                                 # 外部 RESTful 查詢 API
@@ -122,7 +133,7 @@ CakeShop/
 
 | 專案 | 命名空間 | 職責 |
 |------|---------|------|
-| `EC.B2C` | `EC.B2C.Controllers` | B2C 網站 HTTP 輸入／輸出 |
+| `EC.B2C` | `EC.B2C.Pages` / `EC.B2C.Controllers` | Razor Pages 頁面 + Web API 端點 |
 | `EC.API` | `EC.API.Controllers` | 對外查詢 RESTful API |
 | `EC.Test` | `EC.Test.Services` | 單元測試（xUnit + Moq） |
 | `EC.CommonService` | `EC.CommonService.Services` | 商業邏輯實作 |
@@ -157,7 +168,7 @@ EC.B2C / EC.API ──▶ EC.CommonService ──▶ CakeShop.Core ◀── Cak
        └────────────────────────────────────────┴──▶ EC.Entities（所有層共享實體定義）
 ```
 
-- **EC.B2C**：接收請求、呼叫 Service、回傳結果，附帶前端靜態檔
+- **EC.B2C**：Razor Pages 負責頁面渲染（共用 Layout），Controllers 負責 Web API；Vue 3 處理前端互動
 - **EC.API**：對外查詢 API，Swagger UI 預設顯示於根路徑
 - **EC.Test**：單元測試，使用 Moq 隔離外部相依
 - **EC.CommonService**：實作商業邏輯，依賴 `CakeShop.Core` 介面
@@ -215,7 +226,18 @@ dotnet run
 ### 資料表結構
 
 > 欄位命名規則：DB 使用 `snake_case`，C# Model 使用 `PascalCase`，由 `EFCore.NamingConventions` 自動對應。  
-> 新語系欄位（`_th` / `_ko` / `_vi` / `_ms`）以 `ALTER TABLE ADD COLUMN IF NOT EXISTS` 新增，可安全重複執行 `CakeShop.DbSetup`。
+> 所有資料表皆繼承 `AuditableEntity`，包含 5 個共用稽核欄位（見下方）。  
+> 語系欄位（`_th` / `_ko` / `_vi` / `_ms`）及稽核欄位均以 `ALTER TABLE ADD COLUMN IF NOT EXISTS` 新增，可安全重複執行。
+
+#### 共用稽核欄位（所有資料表）
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| `created_at` | `TIMESTAMPTZ NOT NULL DEFAULT NOW()` | 建立時間，由 DbContext 自動填寫 |
+| `created_by` | `VARCHAR(100) NOT NULL DEFAULT 'admin'` | 建立者，預設 `admin` |
+| `updated_at` | `TIMESTAMPTZ NOT NULL DEFAULT NOW()` | 更新時間，每次 SaveChanges 自動更新 |
+| `updated_by` | `VARCHAR(100) NOT NULL DEFAULT 'admin'` | 更新者，預設 `admin` |
+| `update_count` | `INTEGER NOT NULL DEFAULT 0` | 更新次數，每次 Modified 自動遞增 |
 
 #### categories
 
@@ -256,7 +278,7 @@ dotnet run
 | `image_url` | `VARCHAR(500)` | 商品圖片 URL |
 | `category_id` | `INTEGER FK` | 參照 `categories.id` |
 | `is_available` | `BOOLEAN` | 是否上架 |
-| `created_at` | `TIMESTAMPTZ` | |
+| `created_at` … `update_count` | — | 共用稽核欄位（見上方說明） |
 
 #### users
 
@@ -266,7 +288,7 @@ dotnet run
 | `username` | `VARCHAR(50) UNIQUE` | 帳號（唯一） |
 | `password_hash` | `VARCHAR(255)` | SHA-256(password + salt) → Base64 |
 | `email` | `VARCHAR(100)` | |
-| `created_at` | `TIMESTAMPTZ` | |
+| `created_at` … `update_count` | — | 共用稽核欄位 |
 
 #### cart_items
 
@@ -276,8 +298,7 @@ dotnet run
 | `session_id` | `VARCHAR(100)` | 對應登入帳號名稱（已登入才可操作） |
 | `product_id` | `INTEGER FK` | 參照 `products.id`（CASCADE DELETE） |
 | `quantity` | `INTEGER` | 數量（> 0） |
-| `created_at` | `TIMESTAMPTZ` | |
-| `updated_at` | `TIMESTAMPTZ` | |
+| `created_at` … `update_count` | — | 共用稽核欄位 |
 
 #### announcements
 
@@ -293,8 +314,7 @@ dotnet run
 | `content_vi` | `TEXT` (nullable) | Tiếng Việt（為空時退回英文） |
 | `content_ms` | `TEXT` (nullable) | Bahasa Melayu（為空時退回英文） |
 | `is_active` | `BOOLEAN` | 是否啟用 |
-| `created_at` | `TIMESTAMPTZ` | |
-| `updated_at` | `TIMESTAMPTZ` | |
+| `created_at` … `update_count` | — | 共用稽核欄位 |
 
 ### EF Core Migrations
 
@@ -374,8 +394,8 @@ dotnet run
 | 頁面 | 網址 |
 |------|------|
 | 首頁 | http://localhost:5000 |
-| 商品頁 | http://localhost:5000/products.html |
-| 聯絡我們 | http://localhost:5000/contact.html |
+| 商品頁 | http://localhost:5000/Products |
+| 聯絡我們 | http://localhost:5000/Contact |
 | B2C Swagger UI | http://localhost:5000/swagger |
 | EC.API Swagger UI | http://localhost:5100 |
 
@@ -475,7 +495,32 @@ Swagger UI 位於根路徑：**http://localhost:5100**
 
 ---
 
-## 前端功能
+## 前端架構
+
+### Razor Pages + Vue 3 混合模式
+
+```
+瀏覽器請求
+  │
+  ▼
+Razor Pages（Server-side）
+  ├── _Layout.cshtml  ─── 共用結構：Navbar、公告Bar、Footer、購物車抽屜、登入 Modal
+  ├── Index.cshtml    ─── 首頁模板（Hero、輪播、精選商品）
+  ├── Products.cshtml ─── 商品頁模板
+  └── Contact.cshtml  ─── 聯絡頁模板
+          │
+          ▼（嵌入 Vue 3 Client-side）
+      Vue createApp 掛載 #app
+          ├── common.js  ─── useCommonSetup()：語言/驗證/購物車/公告（所有頁面共用）
+          ├── api.js     ─── 封裝所有後端 API 呼叫
+          └── i18n.js    ─── 8 語系翻譯字典
+```
+
+- **Razor Pages** 負責 HTML 結構輸出（Server-side），`_Layout.cshtml` 確保所有頁面共享相同的 Navbar 與公告 Bar
+- **Vue 3** 負責前端互動（Client-side）：語言切換、購物車、登入/登出、商品篩選等
+- **`@@click`**：`.cshtml` 中 Vue 事件指令須以 `@@` 轉義 Razor 的 `@` 符號
+
+### 前端功能
 
 | 功能 | 說明 |
 |------|------|
@@ -484,7 +529,7 @@ Swagger UI 位於根路徑：**http://localhost:5100**
 | 登入 | Modal 彈窗，AES-GCM Token 存入 `localStorage` |
 | 購物車 | 需登入；資料綁定帳號；登出自動清空 |
 | 首頁輪播 | 商品倒排取 4 項，每 4 秒自動切換 |
-| 置頂公告 | 從 `GET /api/announcement` 取得，支援 8 語系（新語系退回英文） |
+| 置頂公告 | `_Layout.cshtml` 共用，每頁皆顯示；從 `GET /api/announcement` 取得，支援 8 語系 |
 | Loading 動畫 | 頁面切換顯示深綠 Loading Screen |
 | RWD | 手機、平板、桌機全支援 |
 
@@ -553,6 +598,8 @@ dotnet test _Test/EC.Test
 - [x] 多語系擴充至 8 種（泰文、韓文、越南文、馬來文）
 - [x] 新增 EC.API 對外查詢 API（商品、公告、會員，Port 5100）
 - [x] 建立 EC.Test 單元測試專案（61 個測試全數通過）
+- [x] 靜態 HTML 改為 Razor Pages（`_Layout.cshtml` 共用 Navbar 與公告 Bar）
+- [x] 新增 `AuditableEntity` 稽核基底類別（建立/更新時間、建立/更新者、更新次數）
 - [ ] 使用環境變數管理加密金鑰與連線字串
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）
