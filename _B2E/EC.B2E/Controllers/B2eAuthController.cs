@@ -1,6 +1,7 @@
 using CakeShop.Core.DTOs;
 using CakeShop.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace EC.B2E.Controllers;
 
@@ -13,6 +14,7 @@ public class B2eAuthController : ControllerBase
     public B2eAuthController(IB2eAuthService authService) => _authService = authService;
 
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var result = await _authService.LoginAsync(request);

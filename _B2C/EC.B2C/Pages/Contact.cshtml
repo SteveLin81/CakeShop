@@ -1,6 +1,6 @@
 @page
 @model ContactModel
-@{ ViewData["Title"] = "聯絡我們"; }
+@{ ViewData["Title"] = "Contact"; }
 
 <!-- ── Page Hero ── -->
 <div class="page-hero">
@@ -70,7 +70,7 @@
         <div class="info-item">
           <div class="info-icon">✉️</div>
           <div>
-            <div class="info-label">Email</div>
+            <div class="info-label">{{ t('contact.email') }}</div>
             <div class="info-value">{{ t('contact.email2') }}</div>
           </div>
         </div>

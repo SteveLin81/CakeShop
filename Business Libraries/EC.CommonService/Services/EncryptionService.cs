@@ -1,24 +1,36 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using CakeShop.Core.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace EC.CommonService.Services;
 
 public class EncryptionService : IEncryptionService
 {
-    private const string MasterSecret = "CakeShopMasterSecret2024!#$%AES256GCM";
-    private const string PasswordSalt = "CakeShopPasswordSalt@2024";
+    private const string DefaultMasterSecret = "CakeShopMasterSecret2024!#$%AES256GCM";
+    private const string DefaultPasswordSalt = "CakeShopPasswordSalt@2024";
+
+    private readonly string _masterSecret;
+    private readonly string _passwordSalt;
+
+    public EncryptionService() : this(null) { }
+
+    public EncryptionService(IConfiguration? configuration)
+    {
+        _masterSecret = configuration?["Encryption:MasterSecret"] ?? DefaultMasterSecret;
+        _passwordSalt = configuration?["Encryption:PasswordSalt"] ?? DefaultPasswordSalt;
+    }
 
     private byte[] DeriveKey()
     {
         using var sha256 = SHA256.Create();
-        return sha256.ComputeHash(Encoding.UTF8.GetBytes(MasterSecret));
+        return sha256.ComputeHash(Encoding.UTF8.GetBytes(_masterSecret));
     }
 
     public string HashPassword(string password)
     {
         using var sha256 = SHA256.Create();
-        var combined = password + PasswordSalt;
+        var combined = password + _passwordSalt;
         var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(combined));
         return Convert.ToBase64String(hash);
     }

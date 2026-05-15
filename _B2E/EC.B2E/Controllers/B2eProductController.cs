@@ -12,11 +12,14 @@ public class B2eProductController : ControllerBase
 {
     private readonly IProductManagementService _mgmtSvc;
     private readonly IProductService           _productSvc;
+    private readonly ILogger<B2eProductController> _logger;
 
-    public B2eProductController(IProductManagementService mgmtSvc, IProductService productSvc)
+    public B2eProductController(IProductManagementService mgmtSvc, IProductService productSvc,
+        ILogger<B2eProductController> logger)
     {
         _mgmtSvc    = mgmtSvc;
         _productSvc = productSvc;
+        _logger     = logger;
     }
 
     [HttpGet]
@@ -44,6 +47,7 @@ public class B2eProductController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] ProductSaveRequest request)
     {
+        if (!ModelState.IsValid) return BadRequest(ApiResult<object>.Fail("請求資料格式錯誤"));
         var operatorName = HttpContext.Items["b2e-username"]?.ToString() ?? "admin";
         try
         {
@@ -51,25 +55,46 @@ public class B2eProductController : ControllerBase
             return CreatedAtAction(nameof(GetById), new { id = dto.Id },
                 ApiResult<ProductDto>.Ok(dto, "商品新增成功"));
         }
-        catch (Exception ex) { return BadRequest(ApiResult<object>.Fail(ex.Message)); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "商品新增失敗");
+            return BadRequest(ApiResult<object>.Fail("商品新增失敗，請稍後再試"));
+        }
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] ProductSaveRequest request)
     {
+        if (!ModelState.IsValid) return BadRequest(ApiResult<object>.Fail("請求資料格式錯誤"));
         var operatorName = HttpContext.Items["b2e-username"]?.ToString() ?? "admin";
         try
         {
             var dto = await _mgmtSvc.UpdateProductAsync(id, request, operatorName);
             return Ok(ApiResult<ProductDto>.Ok(dto, "商品更新成功"));
         }
-        catch (KeyNotFoundException ex) { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(ApiResult<object>.Fail($"商品 {id} 不存在"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "商品更新失敗 id={Id}", id);
+            return BadRequest(ApiResult<object>.Fail("商品更新失敗，請稍後再試"));
+        }
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        await _mgmtSvc.DeleteProductAsync(id);
-        return Ok(ApiResult<object>.Ok(new { }, "商品刪除成功"));
+        try
+        {
+            await _mgmtSvc.DeleteProductAsync(id);
+            return Ok(ApiResult<object>.Ok(new { }, "商品刪除成功"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "商品刪除失敗 id={Id}", id);
+            return BadRequest(ApiResult<object>.Fail("商品刪除失敗，請稍後再試"));
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using CakeShop.Core.DTOs;
 using CakeShop.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace EC.B2C.Controllers;
 
@@ -17,6 +18,7 @@ public class AuthController : ControllerBase
 
     /// <summary>使用者登入（密碼以 SHA-256 雜湊，Token 以 AES-256-GCM 加密）</summary>
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
         var result = await _authService.LoginAsync(request);

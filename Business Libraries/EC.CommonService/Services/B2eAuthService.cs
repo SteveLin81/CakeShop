@@ -40,7 +40,7 @@ public class B2eAuthService : IB2eAuthService
             var payload = _encryptionService.DecryptAesGcm(token);
             var parts   = payload.Split('|');
             if (parts.Length < 3) return Task.FromResult(false);
-            var expiry = DateTime.Parse(parts[2]);
+            var expiry = DateTime.Parse(parts[2], null, System.Globalization.DateTimeStyles.RoundtripKind);
             return Task.FromResult(expiry > DateTime.UtcNow);
         }
         catch { return Task.FromResult(false); }

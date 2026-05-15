@@ -3,8 +3,10 @@ using CakeShop.Infrastructure.Data;
 using CakeShop.Infrastructure.Repositories;
 using EC.B2E.Filters;
 using EC.CommonService.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,8 @@ builder.Services.AddDbContext<CakeShopDbContext>(options =>
            .UseSnakeCaseNamingConvention());
 
 // ── Encryption（Singleton）────────────────────────────────────────────
-builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+builder.Services.AddSingleton<IEncryptionService>(
+    sp => new EncryptionService(sp.GetRequiredService<IConfiguration>()));
 
 // ── B2E 專屬 Repository / Service ─────────────────────────────────────
 builder.Services.AddScoped<IB2eUserRepository,            B2eUserRepository>();
@@ -34,6 +37,30 @@ builder.Services.AddScoped<IAnnouncementManagementService, AnnouncementManagemen
 builder.Services.AddScoped<IUserRepository,               UserRepository>();
 builder.Services.AddScoped<IB2cUserManagementService,     B2cUserManagementService>();
 
+// ── Rate Limiting ─────────────────────────────────────────────────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("login", opt =>
+    {
+        opt.PermitLimit         = 5;
+        opt.Window              = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit          = 0;
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
+// ── CORS ─────────────────────────────────────────────────────────────
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(p =>
+    {
+        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+        if (origins is { Length: > 0 })
+            p.WithOrigins(origins).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+        else
+            p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    }));
+
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -47,11 +74,11 @@ builder.Services.AddSwaggerGen(c =>
     });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name         = "Authorization",
-        Type         = SecuritySchemeType.Http,
-        Scheme       = "Bearer",
-        In           = ParameterLocation.Header,
-        Description  = "輸入 B2E Token"
+        Name        = "Authorization",
+        Type        = SecuritySchemeType.Http,
+        Scheme      = "Bearer",
+        In          = ParameterLocation.Header,
+        Description = "輸入 B2E Token"
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -61,9 +88,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
-builder.Services.AddCors(options =>
-    options.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 var app = builder.Build();
 
@@ -82,15 +106,33 @@ await using (var scope = app.Services.CreateAsyncScope())
     catch (Exception ex) { logger.LogError(ex, "✗ 資料庫連線失敗"); }
 }
 
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+// ── Security Headers ─────────────────────────────────────────────────
+app.Use(async (context, next) =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "B2E Admin API v1");
-    c.RoutePrefix = "swagger";
+    context.Response.Headers["X-Content-Type-Options"]  = "nosniff";
+    context.Response.Headers["X-Frame-Options"]         = "SAMEORIGIN";
+    context.Response.Headers["X-XSS-Protection"]        = "1; mode=block";
+    context.Response.Headers["Referrer-Policy"]         = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"]      = "geolocation=(), microphone=(), camera=()";
+    await next();
 });
+
+app.UseHttpsRedirection();
+
+// ── Swagger（僅開發環境或設定啟用時）────────────────────────────────────
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("EnableSwagger"))
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "B2E Admin API v1");
+        c.RoutePrefix = "swagger";
+    });
+}
 
 app.UseStaticFiles();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapRazorPages();
 app.MapControllers();

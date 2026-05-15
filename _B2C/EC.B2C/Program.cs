@@ -1,9 +1,11 @@
-﻿using EC.CommonService.Services;
+using EC.CommonService.Services;
 using CakeShop.Core.Interfaces;
 using CakeShop.Infrastructure.Data;
 using CakeShop.Infrastructure.Repositories;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,8 @@ builder.Services.AddDbContext<CakeShopDbContext>(options =>
         .UseSnakeCaseNamingConvention());
 
 // ── Encryption（Singleton，無狀態）────────────────────────────────────
-builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+builder.Services.AddSingleton<IEncryptionService>(
+    sp => new EncryptionService(sp.GetRequiredService<IConfiguration>()));
 
 // ── Repositories（Scoped，與 DbContext 生命週期一致）───────────────────
 builder.Services.AddScoped<IProductRepository,      ProductRepository>();
@@ -29,6 +32,30 @@ builder.Services.AddScoped<ICartService,         CartService>();
 builder.Services.AddScoped<IContactService,      ContactService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 
+// ── Rate Limiting ─────────────────────────────────────────────────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("login", opt =>
+    {
+        opt.PermitLimit         = 5;
+        opt.Window              = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit          = 0;
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
+// ── CORS ─────────────────────────────────────────────────────────────
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(p =>
+    {
+        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+        if (origins is { Length: > 0 })
+            p.WithOrigins(origins).AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+        else
+            p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    }));
+
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -41,9 +68,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "甜蜜烘焙坊 API（Entity Framework Core + PostgreSQL）"
     });
 });
-
-builder.Services.AddCors(options =>
-    options.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 var app = builder.Build();
 
@@ -66,15 +90,33 @@ await using (var scope = app.Services.CreateAsyncScope())
     }
 }
 
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+// ── Security Headers ─────────────────────────────────────────────────
+app.Use(async (context, next) =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CakeShop API v1");
-    c.RoutePrefix = "swagger";
+    context.Response.Headers["X-Content-Type-Options"]  = "nosniff";
+    context.Response.Headers["X-Frame-Options"]         = "SAMEORIGIN";
+    context.Response.Headers["X-XSS-Protection"]        = "1; mode=block";
+    context.Response.Headers["Referrer-Policy"]         = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"]      = "geolocation=(), microphone=(), camera=()";
+    await next();
 });
+
+app.UseHttpsRedirection();
+
+// ── Swagger（僅開發環境或設定啟用時）────────────────────────────────────
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("EnableSwagger"))
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "CakeShop API v1");
+        c.RoutePrefix = "swagger";
+    });
+}
 
 app.UseStaticFiles();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapRazorPages();
 app.MapControllers();

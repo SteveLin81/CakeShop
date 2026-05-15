@@ -78,7 +78,7 @@ createApp({
         } else {
           errors.value.global = t('auth.loginFailed');
         }
-      } catch { errors.value.global = 'Login error'; }
+      } catch { errors.value.global = t('common.error'); }
       finally { loading.value = false; }
     }
 

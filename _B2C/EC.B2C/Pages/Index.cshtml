@@ -1,11 +1,11 @@
 @page
 @model IndexModel
-@{ ViewData["Title"] = "甜蜜烘焙坊 Sweet Bakes"; }
+@{ ViewData["Title"] = "Sweet Bakes"; }
 
 <!-- ── Hero ── -->
 <section class="hero">
   <div class="hero-content">
-    <div class="hero-eyebrow">✨ Artisan Pastry Shop</div>
+    <div class="hero-eyebrow">✨ {{ t('home.heroEyebrow') }}</div>
     <h1>{{ t('home.heroTitle') }}</h1>
     <p>{{ t('home.heroSubtitle') }}</p>
     <a href="/Products">
@@ -58,7 +58,7 @@
 <section class="section">
   <div class="container">
     <div class="section-header">
-      <div class="section-tag">FEATURED</div>
+      <div class="section-tag">{{ t('home.featuredTag') }}</div>
       <h2>{{ t('home.featuredTitle') }}</h2>
       <p>{{ t('home.featuredSubtitle') }}</p>
     </div>

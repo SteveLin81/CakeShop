@@ -6,7 +6,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>@ViewData["Title"] – 甜蜜烘焙坊</title>
+  <title>@ViewData["Title"] – Sweet Bakes</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎂</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -84,7 +84,7 @@
             <div class="logo-icon">🎂</div>
             <span style="color:white;font-weight:700;font-size:1.1rem">Sweet Bakes</span>
           </div>
-          <p>精緻烘焙，每日現作。用最好的食材，帶給您最甜蜜的滋味。</p>
+          <p>{{ t('common.footerDesc') }}</p>
         </div>
         <div>
           <h4>{{ t('nav.products') }}</h4>
@@ -98,7 +98,7 @@
           </ul>
         </div>
       </div>
-      <div class="footer-bottom">© 2024 Sweet Bakes 甜蜜烘焙坊. All rights reserved.</div>
+      <div class="footer-bottom">{{ t('common.footerCopyright') }}</div>
     </footer>
 
   </div><!-- /page-content -->

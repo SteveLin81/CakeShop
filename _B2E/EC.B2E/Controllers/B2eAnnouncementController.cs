@@ -11,9 +11,14 @@ namespace EC.B2E.Controllers;
 public class B2eAnnouncementController : ControllerBase
 {
     private readonly IAnnouncementManagementService _mgmtSvc;
+    private readonly ILogger<B2eAnnouncementController> _logger;
 
-    public B2eAnnouncementController(IAnnouncementManagementService mgmtSvc)
-        => _mgmtSvc = mgmtSvc;
+    public B2eAnnouncementController(IAnnouncementManagementService mgmtSvc,
+        ILogger<B2eAnnouncementController> logger)
+    {
+        _mgmtSvc = mgmtSvc;
+        _logger  = logger;
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -33,22 +38,40 @@ public class B2eAnnouncementController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] AnnouncementSaveRequest request)
     {
+        if (!ModelState.IsValid) return BadRequest(ApiResult<object>.Fail("請求資料格式錯誤"));
         var op  = HttpContext.Items["b2e-username"]?.ToString() ?? "admin";
-        var dto = await _mgmtSvc.CreateAsync(request, op);
-        return CreatedAtAction(nameof(GetById), new { id = dto.Id },
-            ApiResult<AnnouncementDto>.Ok(dto, "公告新增成功"));
+        try
+        {
+            var dto = await _mgmtSvc.CreateAsync(request, op);
+            return CreatedAtAction(nameof(GetById), new { id = dto.Id },
+                ApiResult<AnnouncementDto>.Ok(dto, "公告新增成功"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "公告新增失敗");
+            return BadRequest(ApiResult<object>.Fail("公告新增失敗，請稍後再試"));
+        }
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] AnnouncementSaveRequest request)
     {
+        if (!ModelState.IsValid) return BadRequest(ApiResult<object>.Fail("請求資料格式錯誤"));
         var op = HttpContext.Items["b2e-username"]?.ToString() ?? "admin";
         try
         {
             var dto = await _mgmtSvc.UpdateAsync(id, request, op);
             return Ok(ApiResult<AnnouncementDto>.Ok(dto, "公告更新成功"));
         }
-        catch (KeyNotFoundException ex) { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(ApiResult<object>.Fail($"公告 {id} 不存在"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "公告更新失敗 id={Id}", id);
+            return BadRequest(ApiResult<object>.Fail("公告更新失敗，請稍後再試"));
+        }
     }
 
     [HttpDelete("{id:int}")]
@@ -67,6 +90,9 @@ public class B2eAnnouncementController : ControllerBase
             await _mgmtSvc.SetActiveAsync(id, op);
             return Ok(ApiResult<object>.Ok(new { }, "已設為啟用公告"));
         }
-        catch (KeyNotFoundException ex) { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(ApiResult<object>.Fail($"公告 {id} 不存在"));
+        }
     }
 }

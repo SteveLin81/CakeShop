@@ -11,8 +11,13 @@ namespace EC.B2E.Controllers;
 public class B2eUserController : ControllerBase
 {
     private readonly IB2cUserManagementService _mgmtSvc;
+    private readonly ILogger<B2eUserController> _logger;
 
-    public B2eUserController(IB2cUserManagementService mgmtSvc) => _mgmtSvc = mgmtSvc;
+    public B2eUserController(IB2cUserManagementService mgmtSvc, ILogger<B2eUserController> logger)
+    {
+        _mgmtSvc = mgmtSvc;
+        _logger  = logger;
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -32,6 +37,7 @@ public class B2eUserController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] B2cUserCreateRequest request)
     {
+        if (!ModelState.IsValid) return BadRequest(ApiResult<object>.Fail("請求資料格式錯誤"));
         var op = HttpContext.Items["b2e-username"]?.ToString() ?? "admin";
         try
         {
@@ -39,19 +45,30 @@ public class B2eUserController : ControllerBase
             return CreatedAtAction(nameof(GetById), new { id = dto.Id },
                 ApiResult<B2cUserDto>.Ok(dto, "帳號新增成功"));
         }
-        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (InvalidOperationException) { return Conflict(ApiResult<object>.Fail("帳號已存在")); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "帳號新增失敗");
+            return BadRequest(ApiResult<object>.Fail("帳號新增失敗，請稍後再試"));
+        }
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] B2cUserUpdateRequest request)
     {
+        if (!ModelState.IsValid) return BadRequest(ApiResult<object>.Fail("請求資料格式錯誤"));
         var op = HttpContext.Items["b2e-username"]?.ToString() ?? "admin";
         try
         {
             var dto = await _mgmtSvc.UpdateAsync(id, request, op);
             return Ok(ApiResult<B2cUserDto>.Ok(dto, "帳號更新成功"));
         }
-        catch (KeyNotFoundException ex) { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException) { return NotFound(ApiResult<object>.Fail($"會員 {id} 不存在")); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "帳號更新失敗 id={Id}", id);
+            return BadRequest(ApiResult<object>.Fail("帳號更新失敗，請稍後再試"));
+        }
     }
 
     [HttpDelete("{id:int}")]

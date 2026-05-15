@@ -8,6 +8,7 @@ const messages = {
     home: {
       heroTitle: '甜蜜烘焙坊',
       heroSubtitle: '每一口都是精心製作的藝術',
+      heroEyebrow: '精緻手工糕點', featuredTag: '精選',
       heroBtn: '探索蛋糕',
       featuredTitle: '精選蛋糕',
       featuredSubtitle: '嚴選頂級食材，職人手工製作',
@@ -54,7 +55,9 @@ const messages = {
       logoutSuccess: '已成功登出',
       usernameReq: '請輸入帳號', passwordReq: '請輸入密碼'
     },
-    common: { currency: 'NT$', loading: '載入中...', error: '發生錯誤，請稍後再試', close: '關閉' }
+    common: { currency: 'NT$', loading: '載入中...', error: '發生錯誤，請稍後再試', close: '關閉',
+              footerDesc: '精緻烘焙，每日現作。用最好的食材，帶給您最甜蜜的滋味。',
+              footerCopyright: '© 2024 Sweet Bakes. All rights reserved.' }
   },
 
   'en': {
@@ -66,6 +69,7 @@ const messages = {
     home: {
       heroTitle: 'Sweet Bakes',
       heroSubtitle: 'Every bite is a work of art',
+      heroEyebrow: 'Artisan Pastry Shop', featuredTag: 'FEATURED',
       heroBtn: 'Explore Cakes',
       featuredTitle: 'Featured Cakes',
       featuredSubtitle: 'Premium ingredients, handcrafted with passion',
@@ -112,7 +116,9 @@ const messages = {
       logoutSuccess: 'Logged out successfully',
       usernameReq: 'Please enter username', passwordReq: 'Please enter password'
     },
-    common: { currency: 'NT$', loading: 'Loading...', error: 'An error occurred, please try again', close: 'Close' }
+    common: { currency: 'NT$', loading: 'Loading...', error: 'An error occurred, please try again', close: 'Close',
+              footerDesc: 'Artisan baking, made fresh daily. The finest ingredients for the sweetest moments.',
+              footerCopyright: '© 2024 Sweet Bakes. All rights reserved.' }
   },
 
   'ja': {
@@ -124,6 +130,7 @@ const messages = {
     home: {
       heroTitle: 'スイートベイクス',
       heroSubtitle: '一口一口に職人の魂が込められています',
+      heroEyebrow: '職人パティスリー', featuredTag: '注目',
       heroBtn: 'ケーキを探す',
       featuredTitle: '人気のケーキ',
       featuredSubtitle: '厳選素材、職人手作り',
@@ -170,7 +177,9 @@ const messages = {
       logoutSuccess: 'ログアウトしました',
       usernameReq: 'ユーザー名を入力してください', passwordReq: 'パスワードを入力してください'
     },
-    common: { currency: 'NT$', loading: '読み込み中...', error: 'エラーが発生しました。再度お試しください', close: '閉じる' }
+    common: { currency: 'NT$', loading: '読み込み中...', error: 'エラーが発生しました。再度お試しください', close: '閉じる',
+              footerDesc: '毎日手作りの本格スイーツ。最高の素材で最高の味をお届けします。',
+              footerCopyright: '© 2024 Sweet Bakes. All rights reserved.' }
   },
 
   'zh-CN': {
@@ -182,6 +191,7 @@ const messages = {
     home: {
       heroTitle: '甜蜜烘焙坊',
       heroSubtitle: '每一口都是精心制作的艺术',
+      heroEyebrow: '精致手工糕点', featuredTag: '精选',
       heroBtn: '探索蛋糕',
       featuredTitle: '精选蛋糕',
       featuredSubtitle: '严选顶级食材，职人手工制作',
@@ -228,7 +238,9 @@ const messages = {
       logoutSuccess: '已成功退出',
       usernameReq: '请输入账号', passwordReq: '请输入密码'
     },
-    common: { currency: 'NT$', loading: '加载中...', error: '发生错误，请稍后再试', close: '关闭' }
+    common: { currency: 'NT$', loading: '加载中...', error: '发生错误，请稍后再试', close: '关闭',
+              footerDesc: '精致烘焙，每日现作。用最好的食材，带给您最甜蜜的滋味。',
+              footerCopyright: '© 2024 Sweet Bakes. All rights reserved.' }
   },
 
   'th': {
@@ -239,6 +251,7 @@ const messages = {
     },
     home: {
       heroTitle: 'สวีทเบคส์', heroSubtitle: 'ทุกคำคือผลงานศิลปะ',
+      heroEyebrow: 'ร้านขนมอาร์ติซาน', featuredTag: 'แนะนำ',
       heroBtn: 'ดูสินค้า', featuredTitle: 'เค้กแนะนำ',
       featuredSubtitle: 'วัตถุดิบคัดสรร ทำด้วยมือ',
       f1Title: 'วัตถุดิบสด', f1Desc: 'คัดสรรวัตถุดิบสดใหม่ทุกวัน',
@@ -273,7 +286,9 @@ const messages = {
       loginSuccess: 'เข้าสู่ระบบสำเร็จ!', loginFailed: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
       logoutSuccess: 'ออกจากระบบแล้ว', usernameReq: 'กรุณากรอกชื่อผู้ใช้', passwordReq: 'กรุณากรอกรหัสผ่าน'
     },
-    common: { currency: 'NT$', loading: 'กำลังโหลด...', error: 'เกิดข้อผิดพลาด โปรดลองใหม่', close: 'ปิด' }
+    common: { currency: 'NT$', loading: 'กำลังโหลด...', error: 'เกิดข้อผิดพลาด โปรดลองใหม่', close: 'ปิด',
+              footerDesc: 'อบขนมสดใหม่ทุกวัน ด้วยวัตถุดิบที่ดีที่สุดสำหรับช่วงเวลาที่หวานที่สุด',
+              footerCopyright: '© 2024 Sweet Bakes. All rights reserved.' }
   },
 
   'ko': {
@@ -284,6 +299,7 @@ const messages = {
     },
     home: {
       heroTitle: '스위트 베이크스', heroSubtitle: '한 입 한 입이 예술입니다',
+      heroEyebrow: '장인 제과점', featuredTag: '추천',
       heroBtn: '케이크 보기', featuredTitle: '추천 케이크',
       featuredSubtitle: '엄선한 재료, 장인 손수 제작',
       f1Title: '신선한 재료', f1Desc: '매일 엄선한 신선한 재료 사용',
@@ -317,7 +333,9 @@ const messages = {
       loginSuccess: '로그인 성공!', loginFailed: '아이디 또는 비밀번호가 올바르지 않습니다',
       logoutSuccess: '로그아웃 되었습니다', usernameReq: '아이디를 입력해 주세요', passwordReq: '비밀번호를 입력해 주세요'
     },
-    common: { currency: 'NT$', loading: '로딩 중...', error: '오류가 발생했습니다. 다시 시도해 주세요', close: '닫기' }
+    common: { currency: 'NT$', loading: '로딩 중...', error: '오류가 발생했습니다. 다시 시도해 주세요', close: '닫기',
+              footerDesc: '매일 신선하게 만드는 수제 베이킹. 최고의 재료로 최고의 맛을 선사합니다.',
+              footerCopyright: '© 2024 Sweet Bakes. All rights reserved.' }
   },
 
   'vi': {
@@ -328,6 +346,7 @@ const messages = {
     },
     home: {
       heroTitle: 'Sweet Bakes', heroSubtitle: 'Mỗi miếng là một tác phẩm nghệ thuật',
+      heroEyebrow: 'Tiệm Bánh Thủ Công', featuredTag: 'NỔI BẬT',
       heroBtn: 'Khám Phá', featuredTitle: 'Bánh Nổi Bật',
       featuredSubtitle: 'Nguyên liệu tuyển chọn, thủ công tinh tế',
       f1Title: 'Nguyên Liệu Tươi', f1Desc: 'Chọn lọc nguyên liệu tươi ngon mỗi ngày',
@@ -361,7 +380,9 @@ const messages = {
       loginSuccess: 'Đăng nhập thành công!', loginFailed: 'Tên đăng nhập hoặc mật khẩu không đúng',
       logoutSuccess: 'Đã đăng xuất', usernameReq: 'Vui lòng nhập tên đăng nhập', passwordReq: 'Vui lòng nhập mật khẩu'
     },
-    common: { currency: 'NT$', loading: 'Đang tải...', error: 'Có lỗi xảy ra, vui lòng thử lại', close: 'Đóng' }
+    common: { currency: 'NT$', loading: 'Đang tải...', error: 'Có lỗi xảy ra, vui lòng thử lại', close: 'Đóng',
+              footerDesc: 'Bánh nướng thủ công, làm tươi mỗi ngày. Nguyên liệu tốt nhất cho những khoảnh khắc ngọt ngào nhất.',
+              footerCopyright: '© 2024 Sweet Bakes. All rights reserved.' }
   },
 
   'ms': {
@@ -372,6 +393,7 @@ const messages = {
     },
     home: {
       heroTitle: 'Sweet Bakes', heroSubtitle: 'Setiap gigitan adalah karya seni',
+      heroEyebrow: 'Kedai Pastri Artisan', featuredTag: 'PILIHAN',
       heroBtn: 'Terokai Kek', featuredTitle: 'Kek Pilihan',
       featuredSubtitle: 'Bahan terpilih, buatan tangan berkualiti',
       f1Title: 'Bahan Segar', f1Desc: 'Bahan tempatan segar dipilih setiap hari',
@@ -405,6 +427,8 @@ const messages = {
       loginSuccess: 'Berjaya log masuk!', loginFailed: 'Nama pengguna atau kata laluan tidak sah',
       logoutSuccess: 'Berjaya log keluar', usernameReq: 'Sila masukkan nama pengguna', passwordReq: 'Sila masukkan kata laluan'
     },
-    common: { currency: 'NT$', loading: 'Memuatkan...', error: 'Ralat berlaku, sila cuba lagi', close: 'Tutup' }
+    common: { currency: 'NT$', loading: 'Memuatkan...', error: 'Ralat berlaku, sila cuba lagi', close: 'Tutup',
+              footerDesc: 'Bakar artisan, dibuat segar setiap hari. Bahan terbaik untuk momen paling manis.',
+              footerCopyright: '© 2024 Sweet Bakes. All rights reserved.' }
   }
 };
