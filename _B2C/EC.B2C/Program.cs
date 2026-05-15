@@ -29,6 +29,7 @@ builder.Services.AddScoped<ICartService,         CartService>();
 builder.Services.AddScoped<IContactService,      ContactService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 
+builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -72,11 +73,10 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseCors();
 app.UseAuthorization();
+app.MapRazorPages();
 app.MapControllers();
-app.MapFallbackToFile("index.html");
 
 app.Run();

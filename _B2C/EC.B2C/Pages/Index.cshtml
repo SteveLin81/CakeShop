@@ -1,0 +1,134 @@
+@page
+@model IndexModel
+@{ ViewData["Title"] = "甜蜜烘焙坊 Sweet Bakes"; }
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-eyebrow">✨ Artisan Pastry Shop</div>
+    <h1>{{ t('home.heroTitle') }}</h1>
+    <p>{{ t('home.heroSubtitle') }}</p>
+    <a href="/Products">
+      <button class="hero-btn">{{ t('home.heroBtn') }} →</button>
+    </a>
+  </div>
+</section>
+
+<!-- ── Hero Carousel ── -->
+<section class="hero-carousel-section">
+  <el-carousel height="460px" :interval="4000" arrow="always" indicator-position="outside">
+    <el-carousel-item v-for="p in carouselProducts" :key="p.id">
+      <div class="carousel-slide">
+        <img class="carousel-img" :src="p.imageUrl" :alt="getName(p)"
+             @@error="$event.target.src='https://placehold.co/1280x460/1b5e20/white?text=🎂'">
+        <div class="carousel-overlay">
+          <div class="carousel-cat">{{ getCatName(p) }}</div>
+          <h2 class="carousel-name">{{ getName(p) }}</h2>
+          <p class="carousel-desc-line">{{ getDesc(p) }}</p>
+        </div>
+      </div>
+    </el-carousel-item>
+  </el-carousel>
+</section>
+
+<!-- ── Features ── -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🌿</div>
+        <h3>{{ t('home.f1Title') }}</h3>
+        <p>{{ t('home.f1Desc') }}</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👨‍🍳</div>
+        <h3>{{ t('home.f2Title') }}</h3>
+        <p>{{ t('home.f2Desc') }}</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <h3>{{ t('home.f3Title') }}</h3>
+        <p>{{ t('home.f3Desc') }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Featured Products ── -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">FEATURED</div>
+      <h2>{{ t('home.featuredTitle') }}</h2>
+      <p>{{ t('home.featuredSubtitle') }}</p>
+    </div>
+    <div v-if="loading" class="loading-spinner">
+      <div class="spinner"></div>
+      <span>{{ t('common.loading') }}</span>
+    </div>
+    <div v-else class="products-grid">
+      <div class="product-card" v-for="(p, idx) in products" :key="p.id"
+           :style="{ animationDelay: (idx * 0.06 + 0.3) + 's' }">
+        <div class="product-img-wrapper">
+          <img class="product-img" :src="p.imageUrl" :alt="getName(p)"
+               @@error="$event.target.src='https://placehold.co/480x360/e8f5e9/2e7d32?text=🎂'">
+        </div>
+        <div class="product-body">
+          <div class="product-category">{{ getCatName(p) }}</div>
+          <div class="product-name">{{ getName(p) }}</div>
+          <div class="product-desc">{{ getDesc(p) }}</div>
+          <div class="product-footer">
+            <div class="product-price">
+              {{ t('common.currency') }}{{ p.price }}
+              <span>{{ t('products.perSlice') }}</span>
+            </div>
+            <button class="add-cart-btn" @@click="addToCart(p)">{{ t('products.addToCart') }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:40px">
+      <a href="/Products">
+        <button class="hero-btn" style="background:var(--green-dark);color:white;display:inline-flex">
+          {{ t('home.viewAll') }} →
+        </button>
+      </a>
+    </div>
+  </div>
+</section>
+
+@section Scripts {
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
+
+createApp({
+  setup() {
+    const common = useCommonSetup();
+    const loading  = ref(true);
+    const products = ref([]);
+
+    function getName(p) { return getProductName(p, common.locale.value); }
+    function getDesc(p) { return getProductDesc(p, common.locale.value); }
+    function getCatName(p) {
+      const m = { 'en': p.categoryNameEn, 'ja': p.categoryNameJa, 'zh-CN': p.categoryNameZhCn,
+                  'th': p.categoryNameTh, 'ko': p.categoryNameKo, 'vi': p.categoryNameVi, 'ms': p.categoryNameMs };
+      return m[common.locale.value] || p.categoryName;
+    }
+    const carouselProducts = computed(() => [...products.value].reverse().slice(0, 4));
+
+    onMounted(async () => {
+      dismissLoader();
+      applyExitTransition();
+      await common.loadAnnouncement();
+      await common.loadCart();
+      try { products.value = await api.getProducts(); } catch {}
+      finally { loading.value = false; }
+    });
+
+    return {
+      ...common, loading, products, getName, getDesc, getCatName, carouselProducts,
+    };
+  }
+}).use(i18n).use(ElementPlus).mount('#app');
+</script>
+}

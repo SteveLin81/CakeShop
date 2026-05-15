@@ -1,0 +1,122 @@
+@page
+@model ProductsModel
+@{ ViewData["Title"] = "產品"; }
+
+<!-- ── Page Hero ── -->
+<div class="page-hero">
+  <h1>{{ t('products.title') }}</h1>
+  <p>{{ t('home.featuredSubtitle') }}</p>
+</div>
+
+<!-- ── Products Section ── -->
+<section class="section">
+  <div class="container">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-tabs">
+        <button class="filter-tab" :class="{ active: activeCategory === 0 }"
+                @@click="setCategory(0)">{{ t('products.all') }}</button>
+        <button class="filter-tab" v-for="cat in categories" :key="cat.id"
+                :class="{ active: activeCategory === cat.id }"
+                @@click="setCategory(cat.id)">{{ getCatLabel(cat) }}</button>
+      </div>
+      <input class="search-input" v-model="searchText" :placeholder="t('products.search')">
+    </div>
+
+    <!-- Loading -->
+    <div v-if="loading" class="loading-spinner">
+      <div class="spinner"></div>
+      <span>{{ t('common.loading') }}</span>
+    </div>
+
+    <!-- No result -->
+    <div v-else-if="filteredProducts.length === 0" class="no-result">
+      <div class="no-result-icon">🔍</div>
+      <h3>{{ t('products.noResult') }}</h3>
+    </div>
+
+    <!-- Product grid -->
+    <div v-else class="products-grid">
+      <div class="product-card" v-for="(p, idx) in filteredProducts" :key="p.id"
+           :style="{ animationDelay: (idx * 0.06 + 0.2) + 's' }">
+        <div class="product-img-wrapper">
+          <img class="product-img" :src="p.imageUrl" :alt="getName(p)"
+               @@error="$event.target.src='https://placehold.co/480x360/e8f5e9/2e7d32?text=🎂'">
+        </div>
+        <div class="product-body">
+          <div class="product-category">{{ getCatNameFromProduct(p) }}</div>
+          <div class="product-name">{{ getName(p) }}</div>
+          <div class="product-desc">{{ getDesc(p) }}</div>
+          <div class="product-footer">
+            <div class="product-price">
+              {{ t('common.currency') }}{{ p.price }}
+              <span>{{ t('products.perSlice') }}</span>
+            </div>
+            <button class="add-cart-btn" @@click="addToCart(p)">{{ t('products.addToCart') }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+@section Scripts {
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
+
+createApp({
+  setup() {
+    const common = useCommonSetup();
+    const loading        = ref(true);
+    const products       = ref([]);
+    const categories     = ref([]);
+    const activeCategory = ref(0);
+    const searchText     = ref('');
+
+    function getName(p) { return getProductName(p, common.locale.value); }
+    function getDesc(p) { return getProductDesc(p, common.locale.value); }
+    function getCatLabel(c) { return getCategoryName(c, common.locale.value); }
+    function getCatNameFromProduct(p) {
+      const m = { 'en': p.categoryNameEn, 'ja': p.categoryNameJa, 'zh-CN': p.categoryNameZhCn,
+                  'th': p.categoryNameTh, 'ko': p.categoryNameKo, 'vi': p.categoryNameVi, 'ms': p.categoryNameMs };
+      return m[common.locale.value] || p.categoryName;
+    }
+
+    const filteredProducts = computed(() => {
+      let list = activeCategory.value === 0 ? products.value
+                 : products.value.filter(p => p.categoryId === activeCategory.value);
+      if (searchText.value.trim()) {
+        const q = searchText.value.toLowerCase();
+        list = list.filter(p =>
+          getName(p).toLowerCase().includes(q) ||
+          (p.nameEn && p.nameEn.toLowerCase().includes(q))
+        );
+      }
+      return list;
+    });
+
+    function setCategory(id) { activeCategory.value = id; }
+
+    onMounted(async () => {
+      dismissLoader();
+      applyExitTransition();
+      await common.loadAnnouncement();
+      await common.loadCart();
+      try {
+        const [prods, cats] = await Promise.all([api.getProducts(), api.getCategories()]);
+        products.value = prods;
+        categories.value = cats;
+      } catch {}
+      finally { loading.value = false; }
+    });
+
+    return {
+      ...common, loading, products, categories, activeCategory, searchText, filteredProducts,
+      setCategory, getName, getDesc, getCatLabel, getCatNameFromProduct,
+    };
+  }
+}).use(i18n).use(ElementPlus).mount('#app');
+</script>
+}
