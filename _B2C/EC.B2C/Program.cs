@@ -101,7 +101,8 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 // ── Swagger（僅開發環境或設定啟用時）────────────────────────────────────
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("EnableSwagger"))

@@ -420,8 +420,11 @@ dotnet run
 
 ### 6. 開啟網站
 
-| 頁面 | 網址 |
-|------|------|
+> **HTTPS 說明**：開發環境（`ASPNETCORE_ENVIRONMENT=Development`）使用 **HTTP**；正式環境自動強制重導至 HTTPS。  
+> 若要在本機測試 HTTPS，請先執行 `dotnet dev-certs https --trust` 安裝開發用 SSL 憑證。
+
+| 頁面 | 開發環境網址 |
+|------|------------|
 | B2C 首頁 | http://localhost:5000 |
 | B2C 商品頁 | http://localhost:5000/Products |
 | B2C 聯絡我們 | http://localhost:5000/Contact |
@@ -692,6 +695,15 @@ $env:Encryption__PasswordSalt = "your-production-salt"
 ---
 
 ## 資安機制
+
+### HTTPS 強制重導
+
+正式環境（非 Development）自動啟用 `UseHttpsRedirection()`，所有 HTTP 請求重導至 HTTPS。  
+開發環境保持 HTTP 以避免缺少 SSL 憑證時無法啟動；本機如需測試 HTTPS 請執行：
+
+```bash
+dotnet dev-certs https --trust
+```
 
 ### HTTP 安全標頭
 
