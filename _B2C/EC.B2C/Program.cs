@@ -29,6 +29,7 @@ builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
 builder.Services.AddScoped<IAuthService,         AuthService>();
 builder.Services.AddScoped<IProductService,      ProductService>();
 builder.Services.AddScoped<ICartService,         CartService>();
+builder.Services.AddScoped<IEmailService,        EmailService>();
 builder.Services.AddScoped<IContactService,      ContactService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 

@@ -30,7 +30,7 @@
     <el-table-column :label="t('user.email')" min-width="200">
       <template #default="{ row }">{{ row.email }}</template>
     </el-table-column>
-    <el-table-column :label="t('common.actions')" width="160" fixed="right">
+    <el-table-column :label="t('common.actions')" width="200" fixed="right">
       <template #default="{ row }">
         <button class="btn-outline" style="margin-right:8px" @@click="openEdit(row)">✏️ {{ t('common.edit') }}</button>
         <el-popconfirm :title="t('user.deleteConfirm')" @@confirm="doDelete(row.id)">

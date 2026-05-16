@@ -48,12 +48,12 @@
         </span>
       </template>
     </el-table-column>
-    <el-table-column :label="t('homepage.isFeatured')" width="80">
+    <el-table-column :label="t('homepage.isFeatured')" width="110">
       <template #default="{ row }">
-        <span v-if="row.isFeatured">⭐</span>
+        <el-switch v-model="row.isFeatured" @@change="toggleFeatured(row)" :loading="row._saving" />
       </template>
     </el-table-column>
-    <el-table-column :label="t('common.actions')" width="160" fixed="right">
+    <el-table-column :label="t('common.actions')" width="200" fixed="right">
       <template #default="{ row }">
         <button class="btn-outline" style="margin-right:8px" @@click="openEdit(row)">✏️ {{ t('common.edit') }}</button>
         <el-popconfirm :title="t('product.deleteConfirm')" @@confirm="doDelete(row.id)">
@@ -171,10 +171,28 @@ createApp({
       loading.value = true;
       try {
         const [pr, cr] = await Promise.all([b2eApi.getProducts(), b2eApi.getCategories()]);
-        products.value   = pr.data  ?? [];
+        products.value   = (pr.data ?? []).map(p => ({ ...p, _saving: false }));
         categories.value = cr.data  ?? [];
       } catch { common.showToast(common.t('common.error')); }
       finally { loading.value = false; }
+    }
+
+    async function toggleFeatured(row) {
+      row._saving = true;
+      try {
+        const res = await b2eApi.updateProduct(row.id, {
+          name: row.name, nameEn: row.nameEn, nameJa: row.nameJa, nameZhCn: row.nameZhCn,
+          nameTh: row.nameTh||'', nameKo: row.nameKo||'', nameVi: row.nameVi||'', nameMs: row.nameMs||'',
+          description: row.description||'', descriptionEn: row.descriptionEn||'',
+          descriptionJa: row.descriptionJa||'', descriptionZhCn: row.descriptionZhCn||'',
+          descriptionTh: row.descriptionTh||'', descriptionKo: row.descriptionKo||'',
+          descriptionVi: row.descriptionVi||'', descriptionMs: row.descriptionMs||'',
+          price: row.price, imageUrl: row.imageUrl||'', categoryId: row.categoryId,
+          isAvailable: row.isAvailable, isFeatured: row.isFeatured,
+        });
+        if (!res.success) { row.isFeatured = !row.isFeatured; common.showToast(common.t('common.error')); }
+      } catch { row.isFeatured = !row.isFeatured; common.showToast(common.t('common.error')); }
+      finally { row._saving = false; }
     }
 
     function openCreate() {
@@ -237,7 +255,7 @@ createApp({
     });
 
     return { ...common, loading, saving, products, categories, searchText, filterCat, filteredProducts,
-             dialogVisible, isEdit, activeTab, form, openCreate, openEdit, submitForm, doDelete, handleImageUpload, formatDate };
+             dialogVisible, isEdit, activeTab, form, openCreate, openEdit, submitForm, doDelete, handleImageUpload, toggleFeatured, formatDate };
   }
 }).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
 </script>

@@ -252,6 +252,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans TC', 'Segoe UI
 .b2e-lang-option:hover { background: #f0f2f5; }
 .b2e-lang-option.active { background: #d6eaf8; color: var(--b2e-accent); font-weight: 600; }
 
+/* ── Element Plus Table Overrides ── */
+.el-table {
+  --el-table-header-bg-color: #d6eaf8;
+  --el-table-header-text-color: #1a5276;
+}
+.el-table th.el-table__cell {
+  font-weight: 600;
+  font-size: .875rem;
+}
+/* 操作欄按鈕保持同一行，不截斷 */
+.el-table td.el-table__cell .cell {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .b2e-sidebar {

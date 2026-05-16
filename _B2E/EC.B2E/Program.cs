@@ -43,6 +43,9 @@ builder.Services.AddScoped<IAnnouncementManagementService, AnnouncementManagemen
 builder.Services.AddScoped<IUserRepository,               UserRepository>();
 builder.Services.AddScoped<IB2cUserManagementService,     B2cUserManagementService>();
 
+// ── Email ─────────────────────────────────────────────────────────────
+builder.Services.AddScoped<IEmailService,                 EmailService>();
+
 // ── Rate Limiting ─────────────────────────────────────────────────────
 builder.Services.AddRateLimiter(options =>
 {

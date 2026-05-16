@@ -26,11 +26,11 @@
         </span>
       </template>
     </el-table-column>
-    <el-table-column :label="t('common.actions')" width="160" fixed="right">
+    <el-table-column :label="t('common.actions')" width="200" fixed="right">
       <template #default="{ row }">
         <button v-if="hasPermission('roles')" class="btn-outline" style="margin-right:8px" @@click="openEdit(row)">✏️ {{ t('common.edit') }}</button>
         <el-popconfirm v-if="hasPermission('roles')" :title="t('role.deleteConfirm')" @@confirm="doDelete(row.id)">
-          <template #reference><button class="btn-danger">🗑</button></template>
+          <template #reference><button class="btn-danger">🗑 {{ t('common.delete') }}</button></template>
         </el-popconfirm>
       </template>
     </el-table-column>
