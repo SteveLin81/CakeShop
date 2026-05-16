@@ -68,15 +68,18 @@ CakeShop/
 │       │   ├── Admin/
 │       │   │   ├── _AdminLayout.cshtml         # 後台共用 Layout（側邊欄、頂欄、語言切換）
 │       │   │   ├── Dashboard.cshtml / .cs      # 儀表板（統計數字、快速連結）
-│       │   │   ├── Products.cshtml / .cs       # 商品管理（8語系 CRUD）
+│       │   │   ├── Products.cshtml / .cs       # 商品管理（8語系 CRUD + 圖片上傳 + 精選開關）
+│       │   │   ├── Categories.cshtml / .cs     # 分類管理（8語系 CRUD）
 │       │   │   ├── Announcements.cshtml / .cs  # 公告管理（啟用切換 + CRUD）
-│       │   │   └── Users.cshtml / .cs          # B2C 帳號管理（CRUD）
+│       │   │   ├── Users.cshtml / .cs          # B2C 帳號管理（CRUD + 即時搜尋）
+│       │   │   └── Homepage.cshtml / .cs       # 首頁設定（精選/輪播商品 switch 管理）
 │       │   ├── Login.cshtml / .cs              # 登入頁（獨立 Layout）
 │       │   ├── _ViewImports.cshtml
 │       │   └── _ViewStart.cshtml
 │       ├── Controllers/
-│       │   ├── B2eAuthController.cs            # POST login / validate
-│       │   ├── B2eProductController.cs         # 商品 CRUD + 分類查詢
+│       │   ├── B2eAuthController.cs            # POST login / validate（Rate Limiting）
+│       │   ├── B2eProductController.cs         # 商品 CRUD + POST upload-image
+│       │   ├── B2eCategoryController.cs        # 分類 CRUD（8語系）
 │       │   ├── B2eAnnouncementController.cs    # 公告 CRUD + PATCH activate
 │       │   └── B2eUserController.cs            # B2C 帳號 CRUD
 │       ├── Filters/
@@ -113,11 +116,12 @@ CakeShop/
 ├── 📁 Business Libraries/                      ← Solution Folder：商業邏輯
 │   └── EC.CommonService/
 │       └── Services/
-│           ├── EncryptionService.cs            # SHA-256 雜湊 + AES-256-GCM 加解密
+│           ├── EncryptionService.cs            # SHA-256 雜湊 + AES-256-GCM 加解密（密鑰由 IConfiguration 注入）
 │           ├── AuthService.cs                  # B2C 登入驗證、Token 產生
 │           ├── B2eAuthService.cs               # B2E 管理員登入驗證、Token 產生
-│           ├── ProductService.cs               # 商品查詢邏輯
-│           ├── ProductManagementService.cs     # 商品 CRUD（供 B2E 後台）
+│           ├── ProductService.cs               # 商品查詢邏輯（含 IsFeatured）
+│           ├── ProductManagementService.cs     # 商品 CRUD（供 B2E 後台，含 IsFeatured）
+│           ├── CategoryManagementService.cs    # 分類 CRUD（供 B2E 後台）
 │           ├── CartService.cs                  # 購物車操作邏輯
 │           ├── ContactService.cs               # 聯絡表單處理
 │           ├── AnnouncementService.cs          # 置頂公告查詢（B2C 使用）
@@ -149,9 +153,11 @@ CakeShop/
 │       ├── IB2eAuthService.cs                 # B2E 認證介面
 │       ├── IB2eUserRepository.cs              # B2E 管理員 Repository 介面
 │       ├── IProductManagementService.cs       # 商品 CRUD 介面（B2E 用）
+│       ├── ICategoryManagementService.cs      # 分類 CRUD 介面（B2E 用）
 │       ├── IAnnouncementManagementService.cs  # 公告 CRUD 介面（B2E 用）
 │       ├── IB2cUserManagementService.cs       # B2C 帳號 CRUD 介面（B2E 用）
-│       ├── IProductRepository.cs / IUserRepository.cs
+│       ├── IProductRepository.cs              # 含分類 CRUD 方法（GetCategoryById / Create / Update / Delete）
+│       ├── IUserRepository.cs
 │       └── ICartRepository.cs / IAnnouncementRepository.cs
 │
 ├── CakeShop.Infrastructure/                    # 資料存取層（EF Core）
@@ -319,6 +325,7 @@ dotnet run
 | `image_url` | `VARCHAR(500)` | 商品圖片 URL |
 | `category_id` | `INTEGER FK` | 參照 `categories.id` |
 | `is_available` | `BOOLEAN` | 是否上架（B2E 可切換） |
+| `is_featured`  | `BOOLEAN DEFAULT FALSE` | 是否為精選/輪播商品（B2E 首頁設定可切換） |
 
 #### users（B2C 消費者帳號）
 
@@ -526,12 +533,23 @@ Authorization: Bearer <b2eToken>
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
-| GET | `/api/b2e/products` | 取得全部商品 |
+| GET | `/api/b2e/products` | 取得全部商品（含 `isFeatured` 欄位） |
 | GET | `/api/b2e/products/{id}` | 取得單一商品 |
-| GET | `/api/b2e/products/categories` | 取得分類列表 |
-| POST | `/api/b2e/products` | 新增商品（8 語系） |
-| PUT | `/api/b2e/products/{id}` | 修改商品 |
+| GET | `/api/b2e/products/categories` | 取得分類列表（唯讀快捷） |
+| POST | `/api/b2e/products` | 新增商品（8 語系 + `isFeatured`） |
+| PUT | `/api/b2e/products/{id}` | 修改商品（含 `isFeatured` 切換） |
 | DELETE | `/api/b2e/products/{id}` | 刪除商品 |
+| POST | `/api/b2e/products/upload-image` | 上傳商品圖片（≤5 MB，jpg/png/webp/gif），回傳 `/uploads/products/{uuid}.ext` |
+
+#### 分類管理
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| GET | `/api/b2e/categories` | 取得全部分類（含 8 語系） |
+| GET | `/api/b2e/categories/{id}` | 取得單一分類 |
+| POST | `/api/b2e/categories` | 新增分類（8 語系） |
+| PUT | `/api/b2e/categories/{id}` | 修改分類 |
+| DELETE | `/api/b2e/categories/{id}` | 刪除分類（有商品使用時回傳錯誤） |
 
 #### 公告管理
 
@@ -612,27 +630,42 @@ Razor Pages（Server-side）
   │
   ▼
 Razor Pages（Server-side）
-  ├── Login.cshtml        ─── 獨立登入頁
+  ├── Login.cshtml         ─── 獨立登入頁（Rate Limiting：1分鐘5次）
   └── Admin/_AdminLayout.cshtml ─── 後台共用 Layout
-      ├── 深藍灰側邊欄（Dashboard / Products / Announcements / Users）
+      ├── 深藍灰側邊欄（Dashboard / Products / Categories / Announcements / Users / Homepage）
       ├── 頂欄（語言切換 / 管理員帳號 / 登出）
       └── @RenderBody()
               │
               ▼（@section Scripts 嵌入 Vue 3 + Element Plus）
           各管理頁 createApp
               ├── b2e-common.js  ─── useB2eCommon()：Auth Guard / Toast / 語言切換
-              ├── b2e-api.js     ─── 封裝 /api/b2e/* 呼叫（自動帶 b2eToken）
+              ├── b2e-api.js     ─── 封裝 /api/b2e/* 呼叫（自動帶 b2eToken，含圖片上傳）
               └── b2e-i18n.js    ─── 8 語系後台翻譯字典
 ```
+
+**B2E 後台頁面**
+
+| 路徑 | 功能 |
+|------|------|
+| `/b2e/login` | 管理員登入，`testb2e / testb2e` |
+| `/b2e/admin` | 儀表板：統計數字 + 六個快捷卡 |
+| `/b2e/admin/products` | 商品管理：8語系 CRUD、圖片上傳、⭐精選開關 |
+| `/b2e/admin/categories` | 分類管理：8語系 CRUD，刪除前須確保無商品使用 |
+| `/b2e/admin/announcements` | 公告管理：8語系 CRUD + 一鍵啟用（其餘自動停用） |
+| `/b2e/admin/users` | B2C 帳號管理：新增/編輯/刪除、帳號或 Email 即時搜尋 |
+| `/b2e/admin/homepage` | 首頁設定：所有商品列表 + Switch 切換精選狀態，精選商品自動出現在 B2C 輪播 |
 
 **B2E 前端功能**
 
 | 功能 | 說明 |
 |------|------|
 | 認證 Guard | `useB2eCommon().checkAuth()` 在每頁 `onMounted` 驗證 Token，失效即跳轉 `/b2e/login` |
-| 商品管理 | `el-table` 列表、`el-dialog` + `el-tabs` 新增/編輯（8語言分頁）、`el-popconfirm` 刪除 |
-| 公告管理 | 同上，另有啟用切換按鈕（啟用後其他公告自動停用） |
-| 帳號管理 | B2C 消費者帳號的新增 / 修改 Email 及密碼 / 刪除 |
+| 商品管理 | `el-table`、`el-dialog` + `el-tabs`（8語言分頁）、圖片上傳按鈕、精選⭐欄位 |
+| 分類管理 | 完整 8語系 CRUD，分類名稱按語言 Tab 填寫 |
+| 公告管理 | CRUD + 啟用切換（`PATCH /activate`）；啟用後其他公告自動停用 |
+| 首頁設定 | 商品列表 + `el-switch` 即時切換 `isFeatured`，B2C 輪播優先顯示精選商品 |
+| B2C 帳號管理 | 帳號 / Email 即時搜尋，支援新增 / 修改密碼 / 刪除 |
+| 圖片上傳 | 商品表單內建上傳按鈕，圖片存於 `wwwroot/uploads/products/`，限 5 MB |
 | 多語系 | 8 種語言切換（`b2e-i18n.js`），語系存入 `localStorage['b2eLocale']` |
 | Token 儲存 | `localStorage['b2eToken']`、`localStorage['b2eUsername']`（與 B2C Token 獨立） |
 
@@ -669,18 +702,24 @@ B2C 與 B2E 使用相同的加密格式，但 Token 分別由各自的 `AuthServ
 
 ### 密鑰設定
 
-加密密鑰由 `appsettings.json` 的 `Encryption` 區段讀取，開發環境放在 `appsettings.Development.json`（不進版控）：
+加密密鑰由 `appsettings.json` 的 `Encryption` 區段讀取，`EncryptionService` 在建構時透過 `IConfiguration` 注入：
 
 ```json
 {
   "Encryption": {
-    "MasterSecret": "your-master-secret-here",
-    "PasswordSalt": "your-password-salt-here"
+    "MasterSecret": "CakeShopMasterSecret2024!#$%AES256GCM",
+    "PasswordSalt": "CakeShopPasswordSalt@2024"
   }
 }
 ```
 
-生產環境建議以環境變數覆蓋：
+> **⚠️ 注意（登入 401 常見原因）**  
+> 若以 `Start-Process` 或背景程序啟動服務，且未設定 `ASPNETCORE_ENVIRONMENT=Development`，  
+> 服務將只讀取 `appsettings.json`（不讀 `appsettings.Development.json`）。  
+> 此時 `Encryption.PasswordSalt` 若與 DB 中的密碼雜湊使用的 salt 不同，登入會回傳 **401 Unauthorized**。  
+> **解法**：確保 `appsettings.json` 的 Encryption 值與 DbSetup 使用的 salt 相同，或明確設定環境變數。
+
+生產環境部署時，以環境變數覆蓋密鑰（優先於設定檔）：
 
 ```bash
 # Linux / macOS
@@ -791,6 +830,10 @@ dotnet test _Test/EC.Test
 - [x] 靜態 HTML 改為 Razor Pages（`_Layout.cshtml` 共用 Navbar 與公告 Bar）
 - [x] 新增 `AuditableEntity` 稽核基底類別（建立/更新時間、建立/更新者、更新次數）
 - [x] 新增 EC.B2E 後台管理系統（Port 5200）：商品 / 公告 / B2C 帳號 CRUD，8 語系介面，獨立管理員帳號
+- [x] B2E 新增分類管理（8語系 CRUD）、首頁設定（精選商品 switch）、商品圖片上傳（wwwroot/uploads/products/）
+- [x] B2C 首頁輪播優先顯示精選商品（`is_featured`），無精選時 fallback 至最新 4 筆
+- [x] products 資料表新增 `is_featured` 欄位（DbSetup ALTER TABLE IF NOT EXISTS）
+- [x] 修正非 Development 環境 Encryption salt 不一致導致登入 401 的問題
 - [x] 補全所有頁面 8 語系覆蓋（包含 footer、title、hero 標語、badge、管理後台側邊欄等所有 UI 文字）
 - [x] 加密金鑰改由 `appsettings.json` / 環境變數注入，不再硬編碼於原始碼
 - [x] 新增 HTTP 安全標頭（X-Content-Type-Options / X-Frame-Options / X-XSS-Protection / Referrer-Policy / Permissions-Policy）
