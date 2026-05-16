@@ -455,6 +455,10 @@ Console.WriteLine("  ✔ b2e_roles（admin / 商品部門 / 客服部門）");
 await Execute(db, """
     ALTER TABLE b2e_users ADD COLUMN IF NOT EXISTS role_id INT REFERENCES b2e_roles(id) ON DELETE SET NULL;
     ALTER TABLE b2e_users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE b2e_users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(100);
+    ALTER TABLE b2e_users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(100);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMPTZ;
 """);
 
 await Execute(db, $"""

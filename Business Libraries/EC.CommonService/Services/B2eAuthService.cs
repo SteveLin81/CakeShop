@@ -1,18 +1,25 @@
 using CakeShop.Core.DTOs;
 using CakeShop.Core.Interfaces;
+using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace EC.CommonService.Services;
 
 public class B2eAuthService : IB2eAuthService
 {
-    private readonly IB2eUserRepository  _userRepository;
-    private readonly IEncryptionService  _encryptionService;
+    private readonly IB2eUserRepository       _userRepository;
+    private readonly IEncryptionService       _encryptionService;
+    private readonly IEmailService            _email;
+    private readonly ILogger<B2eAuthService>  _logger;
 
-    public B2eAuthService(IB2eUserRepository userRepository, IEncryptionService encryptionService)
+    public B2eAuthService(IB2eUserRepository userRepository, IEncryptionService encryptionService,
+                          IEmailService email, ILogger<B2eAuthService> logger)
     {
         _userRepository    = userRepository;
         _encryptionService = encryptionService;
+        _email             = email;
+        _logger            = logger;
     }
 
     public async Task<B2eLoginResponse> LoginAsync(LoginRequest request)
@@ -102,6 +109,49 @@ public class B2eAuthService : IB2eAuthService
         UpdatedAt          = u.UpdatedAt,
         UpdateCount        = u.UpdateCount,
     };
+
+    public async Task<bool> ForgotPasswordAsync(string email, string resetBaseUrl)
+    {
+        var user = await _userRepository.GetByEmailAsync(email);
+        if (user is null) return true; // 不透露帳號是否存在
+
+        var bytes = new byte[32];
+        RandomNumberGenerator.Fill(bytes);
+        var token = Convert.ToHexString(bytes).ToLower();
+
+        user.ResetToken        = token;
+        user.ResetTokenExpires = DateTime.UtcNow.AddHours(1);
+        await _userRepository.UpdateAsync(user);
+
+        var resetUrl = $"{resetBaseUrl}/b2e/reset-password?token={token}";
+        var body = $"""
+            <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+              <h2 style="color:#1a252f">⚙️ B2E 後台 密碼重設</h2>
+              <p>您好 <b>{System.Net.WebUtility.HtmlEncode(user.Username)}</b>，</p>
+              <p>我們收到您的後台密碼重設請求，請在 <b>1 小時內</b>點擊下方按鈕：</p>
+              <p style="text-align:center;margin:24px 0">
+                <a href="{resetUrl}" style="background:#3498db;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">重設後台密碼</a>
+              </p>
+              <p style="color:#7f8c8d;font-size:.85rem">若您未提出此請求，請忽略此郵件。</p>
+            </div>
+            """;
+        try { await _email.SendAsync(email, "【CakeShop B2E】後台密碼重設連結", body); }
+        catch (Exception ex) { _logger.LogWarning(ex, "B2E 忘記密碼發信失敗 {Email}", email); }
+        return true;
+    }
+
+    public async Task<(bool ok, string message)> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        var user = await _userRepository.GetByResetTokenAsync(request.Token);
+        if (user is null) return (false, "重設連結無效或已過期");
+
+        user.PasswordHash       = _encryptionService.HashPassword(request.NewPassword);
+        user.MustChangePassword = false;
+        user.ResetToken         = null;
+        user.ResetTokenExpires  = null;
+        await _userRepository.UpdateAsync(user);
+        return (true, "密碼重設成功");
+    }
 
     internal static string[] ParsePermissions(string? json)
     {

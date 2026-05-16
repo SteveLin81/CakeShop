@@ -26,10 +26,10 @@ builder.Services.AddScoped<ICartRepository,         CartRepository>();
 builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
 
 // ── Business Services（Scoped）────────────────────────────────────────
+builder.Services.AddScoped<IEmailService,        EmailService>();
 builder.Services.AddScoped<IAuthService,         AuthService>();
 builder.Services.AddScoped<IProductService,      ProductService>();
 builder.Services.AddScoped<ICartService,         CartService>();
-builder.Services.AddScoped<IEmailService,        EmailService>();
 builder.Services.AddScoped<IContactService,      ContactService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 

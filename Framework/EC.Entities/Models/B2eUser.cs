@@ -7,6 +7,8 @@ public class B2eUser : AuditableEntity
     public string   PasswordHash       { get; set; } = string.Empty;
     public string   Email              { get; set; } = string.Empty;
     public int?     RoleId             { get; set; }
-    public bool     MustChangePassword { get; set; } = false;
-    public B2eRole? Role               { get; set; }
+    public bool      MustChangePassword { get; set; } = false;
+    public string?   ResetToken         { get; set; }
+    public DateTime? ResetTokenExpires  { get; set; }
+    public B2eRole?  Role               { get; set; }
 }

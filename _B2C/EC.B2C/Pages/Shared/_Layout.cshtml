@@ -62,7 +62,10 @@
           🛒 {{ t('nav.cart') }}
           <span class="cart-badge" v-if="cartCount > 0">{{ cartCount }}</span>
         </button>
-        <button v-if="!isLoggedIn" class="login-btn" @@click="loginOpen = true">{{ t('nav.login') }}</button>
+        <template v-if="!isLoggedIn">
+          <button class="login-btn" style="background:#e8f5e9;color:#27ae60;border:1.5px solid #27ae60" @@click="registerOpen = true">{{ t('auth.register') }}</button>
+          <button class="login-btn" @@click="loginOpen = true">{{ t('nav.login') }}</button>
+        </template>
         <span v-else style="display:flex;align-items:center;gap:8px">
           <span style="font-size:.9rem;color:var(--green-dark);font-weight:600">👤 {{ username }}</span>
           <button class="login-btn" style="background:#e0e0e0;color:#333" @@click="logout">{{ t('nav.logout') }}</button>
@@ -161,6 +164,49 @@
         <button class="submit-btn" @@click="doLogin" :disabled="loginLoading">
           {{ loginLoading ? t('common.loading') : t('auth.login') }}
         </button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:.85rem">
+          <a href="/forgot-password" style="color:var(--green-dark);text-decoration:none">{{ t('auth.forgotPassword') }}</a>
+          <a href="#" style="color:var(--green-dark);text-decoration:none" @@click.prevent="loginOpen=false;registerOpen=true">{{ t('auth.register') }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Register Modal ── -->
+  <div class="modal-overlay" v-if="registerOpen" @@click.self="registerOpen=false">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>{{ t('auth.registerTitle') }}</h3>
+        <button class="modal-close" @@click="registerOpen=false">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">{{ t('auth.username') }}</label>
+          <input class="form-input" v-model="registerForm.username" :placeholder="t('auth.username')" @@keyup.enter="doRegister">
+          <div class="form-error" v-if="registerErrors.username">{{ registerErrors.username }}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ t('auth.email') }}</label>
+          <input class="form-input" type="email" v-model="registerForm.email" :placeholder="t('auth.email')" @@keyup.enter="doRegister">
+          <div class="form-error" v-if="registerErrors.email">{{ registerErrors.email }}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ t('auth.password') }}</label>
+          <input class="form-input" type="password" v-model="registerForm.password" :placeholder="t('auth.password')" @@keyup.enter="doRegister">
+          <div class="form-error" v-if="registerErrors.password">{{ registerErrors.password }}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ t('auth.confirmPassword') }}</label>
+          <input class="form-input" type="password" v-model="registerForm.confirmPassword" :placeholder="t('auth.confirmPassword')" @@keyup.enter="doRegister">
+          <div class="form-error" v-if="registerErrors.confirmPassword">{{ registerErrors.confirmPassword }}</div>
+        </div>
+        <div class="form-error" style="margin-bottom:12px" v-if="registerErrors.global">{{ registerErrors.global }}</div>
+        <button class="submit-btn" @@click="doRegister" :disabled="registerLoading">
+          {{ registerLoading ? t('common.loading') : t('auth.register') }}
+        </button>
+        <div style="text-align:center;margin-top:14px;font-size:.85rem">
+          <a href="#" style="color:var(--green-dark);text-decoration:none" @@click.prevent="registerOpen=false;loginOpen=true">{{ t('nav.login') }}</a>
+        </div>
       </div>
     </div>
   </div>

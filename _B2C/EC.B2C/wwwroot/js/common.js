@@ -62,7 +62,37 @@ function useCommonSetup() {
   const loginForm   = ref({ username: '', password: '' });
   const loginErrors = ref({});
   const loginLoading = ref(false);
+  const registerOpen   = ref(false);
+  const registerForm   = ref({ username: '', email: '', password: '', confirmPassword: '' });
+  const registerErrors = ref({});
+  const registerLoading = ref(false);
   const cartKey = computed(() => isLoggedIn.value ? username.value : null);
+
+  async function doRegister() {
+    registerErrors.value = {};
+    if (!registerForm.value.username) registerErrors.value.username = t('auth.usernameReq');
+    if (!registerForm.value.email)    registerErrors.value.email    = t('auth.emailRequired');
+    if (!registerForm.value.password) registerErrors.value.password = t('auth.passwordReq');
+    else if (registerForm.value.password.length < 6) registerErrors.value.password = t('auth.passwordTooShort');
+    if (registerForm.value.password !== registerForm.value.confirmPassword)
+      registerErrors.value.confirmPassword = t('auth.passwordMismatch');
+    if (Object.keys(registerErrors.value).length) return;
+    registerLoading.value = true;
+    try {
+      const res = await api.post('/auth/register', {
+        username: registerForm.value.username,
+        email:    registerForm.value.email,
+        password: registerForm.value.password
+      });
+      if (res.success) {
+        registerOpen.value = false;
+        registerForm.value = { username: '', email: '', password: '', confirmPassword: '' };
+        loginOpen.value = true;
+        showToast(t('auth.loginSuccess').replace('！歡迎回來', ''));
+      } else { registerErrors.value.global = res.message || t('common.error'); }
+    } catch { registerErrors.value.global = t('common.error'); }
+    finally { registerLoading.value = false; }
+  }
 
   async function doLogin() {
     loginErrors.value = {};
@@ -182,6 +212,7 @@ function useCommonSetup() {
   return {
     t, locale, langs, currentLangLabel, setLocale, showLangMenu, isScrolled,
     isLoggedIn, username, loginOpen, loginForm, loginErrors, loginLoading, doLogin, logout,
+    registerOpen, registerForm, registerErrors, registerLoading, doRegister,
     cartKey, cartOpen, openCart, cartItems, cartTotal, cartCount, getCartItemName,
     loadCart, addToCart, updateQty, removeItem, clearCart,
     announcementVisible, announcementContent, loadAnnouncement, dismissAnnouncement,

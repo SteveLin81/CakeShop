@@ -1,4 +1,4 @@
-﻿using CakeShop.Core.Interfaces;
+using CakeShop.Core.Interfaces;
 using EC.Entities.Models;
 using CakeShop.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +17,14 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByIdAsync(int id)
         => await _ctx.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+
+    public async Task<User?> GetByEmailAsync(string email)
+        => await _ctx.Users.AsNoTracking()
+               .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+    public async Task<User?> GetByResetTokenAsync(string token)
+        => await _ctx.Users.AsNoTracking()
+               .FirstOrDefaultAsync(u => u.ResetToken == token && u.ResetTokenExpires > DateTime.UtcNow);
 
     public async Task<IEnumerable<User>> GetAllAsync()
         => await _ctx.Users.AsNoTracking()

@@ -3,6 +3,7 @@ using CakeShop.Core.Interfaces;
 using EC.CommonService.Services;
 using EC.Entities.Models;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace EC.Test.Services;
@@ -11,10 +12,12 @@ public class AuthServiceTests
 {
     private readonly Mock<IUserRepository>    _userRepoMock = new();
     private readonly Mock<IEncryptionService> _encryptionMock = new();
+    private readonly Mock<IEmailService>      _emailMock = new();
     private readonly AuthService              _sut;
 
     public AuthServiceTests()
-        => _sut = new AuthService(_userRepoMock.Object, _encryptionMock.Object);
+        => _sut = new AuthService(_userRepoMock.Object, _encryptionMock.Object,
+                                   _emailMock.Object, NullLogger<AuthService>.Instance);
 
     // ── LoginAsync ───────────────────────────────────────────────────
 

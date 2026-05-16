@@ -38,6 +38,9 @@
       <button class="b2e-login-btn" @@click="doLogin" :disabled="loading">
         {{ loading ? t('common.loading') : t('auth.login') }}
       </button>
+      <div style="text-align:center;margin-top:14px">
+        <a href="/b2e/forgot-password" style="color:#3498db;font-size:.875rem;text-decoration:none">{{ t('auth.forgotPassword') }}</a>
+      </div>
     </div>
   </div>
 </div>

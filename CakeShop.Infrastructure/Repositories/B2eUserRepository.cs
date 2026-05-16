@@ -19,6 +19,14 @@ public class B2eUserRepository : IB2eUserRepository
         => await _ctx.B2eUsers.Include(u => u.Role).AsNoTracking()
                .FirstOrDefaultAsync(u => u.Id == id);
 
+    public async Task<B2eUser?> GetByEmailAsync(string email)
+        => await _ctx.B2eUsers.Include(u => u.Role).AsNoTracking()
+               .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+    public async Task<B2eUser?> GetByResetTokenAsync(string token)
+        => await _ctx.B2eUsers.Include(u => u.Role).AsNoTracking()
+               .FirstOrDefaultAsync(u => u.ResetToken == token && u.ResetTokenExpires > DateTime.UtcNow);
+
     public async Task<IEnumerable<B2eUser>> GetAllAsync()
         => await _ctx.B2eUsers.Include(u => u.Role)
                .OrderBy(u => u.Username).AsNoTracking().ToListAsync();

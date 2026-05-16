@@ -47,20 +47,25 @@ CakeShop/
 │       │   ├── Index.cshtml / .cs              # 首頁（Hero、輪播、精選商品）
 │       │   ├── Products.cshtml / .cs           # 商品頁（篩選、搜尋）
 │       │   └── Contact.cshtml / .cs            # 聯絡頁
+│       ├── Pages/                              # Razor Pages
+│       │   ├── Shared/
+│       │   │   └── _Layout.cshtml              # 共用 Layout（Navbar 含「建立帳號」按鈕與 Register Modal、Login Modal 含忘記密碼連結）
+│       │   ├── ForgotPassword.cshtml / .cs     # 忘記密碼頁（輸入信箱，發送重設連結）
+│       │   └── ResetPassword.cshtml / .cs      # 重設密碼頁（讀取 ?token=，更新新密碼）
 │       ├── Controllers/
-│       │   ├── AuthController.cs
+│       │   ├── AuthController.cs               # POST login/validate/register/forgot-password/reset-password
 │       │   ├── ProductController.cs
 │       │   ├── CartController.cs
 │       │   ├── ContactController.cs
 │       │   └── AnnouncementController.cs
 │       ├── Program.cs                          # DI 註冊、Razor Pages、DbContext、Swagger
-│       ├── appsettings.json                    # Port 5000、ConnectionStrings
+│       ├── appsettings.json                    # Port 5000、ConnectionStrings、App:BaseUrl
 │       └── wwwroot/                            # 靜態資源
 │           ├── css/style.css
 │           └── js/
-│               ├── i18n.js                     # 8 語系翻譯字典
+│               ├── i18n.js                     # 8 語系翻譯字典（含 auth 全 key：register/forgotPassword/resetPassword 等）
 │               ├── api.js                      # API 呼叫封裝
-│               └── common.js                   # 共用 Vue Composition（語言、驗證、購物車、公告）
+│               └── common.js                   # 共用 Vue Composition（語言、驗證、購物車、公告、Register Modal 邏輯）
 │
 ├── 📁 _B2E/                                    ← Solution Folder：B2E 後台管理系統
 │   └── EC.B2E/                                 # 後台入口層（Razor Pages + Web API）
@@ -78,8 +83,11 @@ CakeShop/
 │       │   ├── Login.cshtml / .cs              # 登入頁（獨立 Layout）
 │       │   ├── _ViewImports.cshtml
 │       │   └── _ViewStart.cshtml
+│       ├── Pages/                              # Razor Pages（需 B2E Token）
+│       │   ├── ForgotPassword.cshtml / .cs     # 忘記密碼頁（輸入信箱，發送重設連結）
+│       │   └── ResetPassword.cshtml / .cs      # 重設密碼頁（讀取 ?token=，更新新密碼）
 │       ├── Controllers/
-│       │   ├── B2eAuthController.cs            # POST login / GET me / POST change-password
+│       │   ├── B2eAuthController.cs            # POST login/validate/forgot-password/reset-password / GET me / POST change-password
 │       │   ├── B2eProductController.cs         # 商品 CRUD + POST upload-image
 │       │   ├── B2eCategoryController.cs        # 分類 CRUD（8語系）
 │       │   ├── B2eAnnouncementController.cs    # 公告 CRUD + PATCH activate
@@ -89,11 +97,11 @@ CakeShop/
 │       ├── Filters/
 │       │   └── B2eAuthFilter.cs                # IAsyncActionFilter：Bearer Token 驗證 + MustChangePassword 攔截
 │       ├── Program.cs                          # DI 註冊、B2E 服務、Swagger（Bearer auth）
-│       ├── appsettings.json                    # Port 5200、ConnectionStrings（同 B2C DB）
+│       ├── appsettings.json                    # Port 5200、ConnectionStrings（同 B2C DB）、App:BaseUrl
 │       └── wwwroot/                            # 靜態資源
 │           ├── css/b2e.css                     # 後台樣式（深藍灰側邊欄 + 藍色 Accent）
 │           └── js/
-│               ├── b2e-i18n.js                 # 8 語系後台翻譯字典
+│               ├── b2e-i18n.js                 # 8 語系後台翻譯字典（含 auth 忘記/重設密碼全 key）
 │               ├── b2e-api.js                  # 封裝 /api/b2e/* 呼叫（自動帶 Token）
 │               └── b2e-common.js               # useB2eCommon()：Auth Guard / Toast / 語言切換
 │
@@ -153,6 +161,7 @@ CakeShop/
 │   │   ├── LoginRequest.cs / LoginResponse.cs
 │   │   ├── ContactFormDto.cs
 │   │   ├── AnnouncementDto.cs
+│   │   ├── AuthDto.cs                         # 認證 DTO（RegisterRequest / ForgotPasswordRequest / ResetPasswordRequest）
 │   │   └── B2eDto.cs                          # B2E 專用 DTO（ApiResult<T> / B2eLoginResponse / B2eRoleDto / B2eAdminDto / ChangePasswordRequest）
 │   └── Interfaces/
 │       ├── IEncryptionService.cs
@@ -347,7 +356,9 @@ dotnet run
 | `id` | `SERIAL PK` | |
 | `username` | `VARCHAR(50) UNIQUE` | 帳號（唯一） |
 | `password_hash` | `VARCHAR(255)` | SHA-256(password + salt) → Base64 |
-| `email` | `VARCHAR(100)` | |
+| `email` | `VARCHAR(100)` | 電子郵件（用於忘記密碼發送重設連結） |
+| `reset_token` | `VARCHAR(100)` | 密碼重設 Token（64 碼 hex，有效期 1 小時） |
+| `reset_token_expires` | `TIMESTAMPTZ` | Token 到期時間（UTC） |
 
 #### b2e_roles（B2E 角色）
 
@@ -376,6 +387,8 @@ dotnet run
 | `email` | `VARCHAR(100)` | |
 | `role_id` | `INTEGER FK` | 參照 `b2e_roles.id`（ON DELETE SET NULL） |
 | `must_change_password` | `BOOLEAN DEFAULT FALSE` | 首次登入強制改密碼；由 admin 新增的帳號預設 `TRUE` |
+| `reset_token` | `VARCHAR(100)` | 密碼重設 Token（64 碼 hex，有效期 1 小時） |
+| `reset_token_expires` | `TIMESTAMPTZ` | Token 到期時間（UTC） |
 
 > `b2e_users` 與 `users` 為**獨立資料表**，帳號體系完全分離；B2E Token 也獨立於 B2C Token 之外。
 
@@ -467,9 +480,13 @@ dotnet run
 | B2C 首頁 | http://localhost:5000 |
 | B2C 商品頁 | http://localhost:5000/Products |
 | B2C 聯絡我們 | http://localhost:5000/Contact |
+| **B2C 忘記密碼** | **http://localhost:5000/forgot-password** |
+| **B2C 重設密碼** | **http://localhost:5000/reset-password?token=xxx** |
 | B2C Swagger UI | http://localhost:5000/swagger |
 | **B2E 根路徑（自動轉跳）** | **http://localhost:5200** |
 | **B2E 登入頁** | **http://localhost:5200/b2e/login** |
+| **B2E 忘記密碼** | **http://localhost:5200/b2e/forgot-password** |
+| **B2E 重設密碼** | **http://localhost:5200/b2e/reset-password?token=xxx** |
 | **B2E 儀表板** | **http://localhost:5200/b2e/admin** |
 | **B2E Swagger UI** | **http://localhost:5200/swagger** |
 | EC.API Swagger UI | http://localhost:5100 |
@@ -527,6 +544,9 @@ dotnet test
 |------|------|------|
 | POST | `/api/auth/login` | B2C 登入，回傳 AES-256-GCM Token |
 | POST | `/api/auth/validate` | 驗證 B2C Token |
+| POST | `/api/auth/register` | B2C 帳號註冊（Username / Email / Password，限制1分鐘5次） |
+| POST | `/api/auth/forgot-password` | 發送密碼重設連結至信箱（不洩漏 Email 是否存在，限制1分鐘5次） |
+| POST | `/api/auth/reset-password` | 使用有效 Token 重設密碼（Token 有效期 1 小時） |
 
 #### 商品
 
@@ -571,6 +591,8 @@ Authorization: Bearer <b2eToken>
 | POST | `/api/b2e/auth/validate` | 驗證 B2E Token 是否有效 |
 | GET | `/api/b2e/auth/me` | 取得目前登入者資訊（需 Token，免 mustChangePassword 攔截） |
 | POST | `/api/b2e/auth/change-password` | 修改密碼（需 Token，免 mustChangePassword 攔截） |
+| POST | `/api/b2e/auth/forgot-password` | 發送密碼重設連結至管理員信箱（不洩漏 Email 是否存在） |
+| POST | `/api/b2e/auth/reset-password` | 使用有效 Token 重設 B2E 管理員密碼 |
 
 #### 商品管理
 
@@ -696,6 +718,7 @@ Razor Pages（Server-side）
 | 商品頁面標題 / 篩選 / 搜尋 | `{{ t('products.*') }}` |
 | 聯絡頁表單欄位 / 驗證訊息 | `{{ t('contact.*') }}` |
 | 登入 / 登出 / 錯誤訊息 | `{{ t('auth.*') }}` |
+| **帳號註冊 / 忘記密碼 / 重設密碼** | `{{ t('auth.register') }}` / `{{ t('auth.forgotPassword') }}` / `{{ t('auth.resetPassword') }}` 等，全部 8 語系覆蓋 |
 | 購物車 / 公告 / 通用文字 | `{{ t('cart.*') }}` / `{{ t('common.*') }}` |
 
 ### B2E：Razor Pages + Vue 3 + Element Plus 後台
@@ -787,8 +810,8 @@ Razor Pages（Server-side）
 
 | 檔案 | 位置 | 語系數 | 覆蓋範圍 |
 |------|------|--------|---------|
-| `i18n.js` | `_B2C/EC.B2C/wwwroot/js/` | 8 | nav / home / products / cart / contact / auth / common |
-| `b2e-i18n.js` | `_B2E/EC.B2E/wwwroot/js/` | 8 | menu / auth / common / dashboard / category / homepage / product / announcement / user / role / admin / changePassword |
+| `i18n.js` | `_B2C/EC.B2C/wwwroot/js/` | 8 | nav / home / products / cart / contact / auth（含 register / forgotPassword / resetPassword 全 key） / common |
+| `b2e-i18n.js` | `_B2E/EC.B2E/wwwroot/js/` | 8 | menu / auth（含 forgotPassword / resetPassword 全 key） / common / dashboard / category / homepage / product / announcement / user / role / admin / changePassword |
 
 ---
 
@@ -1096,6 +1119,14 @@ dotnet test _Test/EC.Test
 - [x] B2E 表格欄位優化：操作欄加寬至 200px、Roles/Admins 刪除按鈕補上文字、CSS 修正 `overflow: visible` 避免按鈕被截斷為 `...`
 - [x] B2E 表頭改為淺藍色（`--el-table-header-bg-color: #d6eaf8`）、加粗字體，操作欄按鈕 `white-space: nowrap` 防止換行
 - [x] 新增 Email 發信功能（MailKit + Gmail SMTP）：`IEmailService` / `EmailService`；B2C 聯絡表單送出後自動寄信通知管理員，發信失敗不影響用戶回應
+- [x] B2C 新增帳號**註冊**功能：Navbar 加入「建立帳號」按鈕，Register Modal 含帳號 / Email / 密碼 / 確認密碼四欄，呼叫 `POST /api/auth/register`；注冊成功後自動帶出登入 Modal
+- [x] B2C 新增**忘記密碼**功能：Login Modal 加入「忘記密碼？」連結，獨立頁面 `/forgot-password` 輸入信箱發送重設連結，`/reset-password?token=xxx` 頁面驗證 Token 並更新新密碼
+- [x] B2E 新增**忘記密碼**功能：Login 頁加入「忘記密碼？」連結，獨立頁面 `/b2e/forgot-password` 與 `/b2e/reset-password?token=xxx`
+- [x] `users` 與 `b2e_users` 資料表新增 `reset_token`（64碼hex） 和 `reset_token_expires`（TIMESTAMPTZ）欄位
+- [x] 密碼重設 Token 以 `RandomNumberGenerator.Fill` 產生（加密安全），有效期 1 小時，驗證後立即清除
+- [x] 忘記密碼 API 無論 Email 是否存在均回傳相同訊息（防止枚舉攻擊）
+- [x] 8 語系完整覆蓋：B2C `i18n.js` 和 B2E `b2e-i18n.js` 的 `auth` 區塊均新增全套 register / forgotPassword / resetPassword 相關 key
+- [x] `AuthServiceTests` 更新：新增 `IEmailService` Mock 與 `NullLogger<AuthService>.Instance` 以符合更新後的建構子簽章
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）
 - [ ] 加入結帳 / 訂單管理功能
