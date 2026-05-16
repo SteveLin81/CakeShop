@@ -30,17 +30,44 @@ function useB2eCommon() {
 
   // ── Auth ──────────────────────────────────────────────────────────
   const adminUsername = ref(localStorage.getItem('b2eUsername') || '');
+  const adminRole     = ref(localStorage.getItem('b2eRole')     || '');
+  const permissions   = ref(JSON.parse(localStorage.getItem('b2ePermissions') || '[]'));
+
+  function hasPermission(key) { return permissions.value.includes(key); }
 
   async function checkAuth() {
     const token = localStorage.getItem('b2eToken');
     if (!token) { location.href = '/b2e/login'; return; }
-    const res = await b2eApi.validateToken(token);
-    if (!res.isValid) { location.href = '/b2e/login'; }
+
+    try {
+      const res = await b2eApi.getMe();
+      if (!res.success || !res.data) { location.href = '/b2e/login'; return; }
+
+      const me = res.data;
+      adminUsername.value = me.username;
+      adminRole.value     = me.roleName;
+      permissions.value   = me.permissions ?? [];
+
+      localStorage.setItem('b2eUsername',    me.username);
+      localStorage.setItem('b2eRole',        me.roleName || '');
+      localStorage.setItem('b2ePermissions', JSON.stringify(me.permissions ?? []));
+
+      if (me.mustChangePassword) {
+        const currentPath = location.pathname;
+        if (currentPath !== '/b2e/admin/change-password') {
+          location.href = '/b2e/admin/change-password';
+        }
+      }
+    } catch {
+      location.href = '/b2e/login';
+    }
   }
 
   function logout() {
     localStorage.removeItem('b2eToken');
     localStorage.removeItem('b2eUsername');
+    localStorage.removeItem('b2eRole');
+    localStorage.removeItem('b2ePermissions');
     location.href = '/b2e/login';
   }
 
@@ -60,7 +87,7 @@ function useB2eCommon() {
 
   return {
     t, locale, langs, currentLangLabel, setLocale, showLangMenu,
-    adminUsername, checkAuth, logout,
+    adminUsername, adminRole, permissions, hasPermission, checkAuth, logout,
     sidebarOpen, toast, toastType, showToast,
   };
 }
@@ -90,3 +117,14 @@ function formatDate(d) {
   const dt = new Date(d);
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
 }
+
+// ── 動態更新瀏覽器 Tab 標題（隨語系切換）────────────────────────────────
+;(function() {
+  const key = window.__b2eTitleKey;
+  if (!key) return;
+  const { t, locale } = b2eI18n.global;
+  Vue.watchEffect(() => {
+    const _ = locale.value; // 追蹤 locale 變化
+    document.title = t(key) + ' – B2E Admin';
+  });
+})();

@@ -1,6 +1,107 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CakeShop.Core.DTOs;
+
+// ── B2E 登入回應（擴充 B2C LoginResponse，加入角色與權限）──────────────
+public class B2eLoginResponse
+{
+    public bool     Success            { get; set; }
+    public string   Token              { get; set; } = string.Empty;
+    public string   Username           { get; set; } = string.Empty;
+    public string   Message            { get; set; } = string.Empty;
+    public string   Role               { get; set; } = string.Empty;
+    public string[] Permissions        { get; set; } = [];
+    public bool     MustChangePassword { get; set; }
+}
+
+// ── 修改密碼 ──────────────────────────────────────────────────────────
+public class ChangePasswordRequest
+{
+    [Required(ErrorMessage = "請輸入目前密碼")]
+    public string CurrentPassword { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "請輸入新密碼")]
+    [MinLength(4, ErrorMessage = "新密碼至少 4 個字元")]
+    [MaxLength(100)]
+    public string NewPassword { get; set; } = string.Empty;
+}
+
+// ── 角色管理 ─────────────────────────────────────────────────────────
+public class B2eRoleDto
+{
+    public int      Id          { get; set; }
+    public string   Name        { get; set; } = string.Empty;
+    public string   Description { get; set; } = string.Empty;
+    public string[] Permissions { get; set; } = [];
+}
+
+public class B2eRoleSaveRequest
+{
+    [Required(ErrorMessage = "角色名稱為必填")]
+    [MaxLength(50)]
+    public string Name { get; set; } = string.Empty;
+
+    [MaxLength(200)]
+    public string Description { get; set; } = string.Empty;
+
+    [Required]
+    public string[] Permissions { get; set; } = [];
+}
+
+// ── 後台帳號管理 ──────────────────────────────────────────────────────
+public class B2eAdminDto
+{
+    public int      Id                 { get; set; }
+    public string   Username           { get; set; } = string.Empty;
+    public string   Email              { get; set; } = string.Empty;
+    public int?     RoleId             { get; set; }
+    public string   RoleName           { get; set; } = string.Empty;
+    public string[] Permissions        { get; set; } = [];
+    public bool     MustChangePassword { get; set; }
+    public DateTime CreatedAt          { get; set; }
+    public DateTime UpdatedAt          { get; set; }
+    public int      UpdateCount        { get; set; }
+}
+
+public class B2eAdminCreateRequest
+{
+    [Required(ErrorMessage = "帳號為必填")]
+    [MaxLength(50)]
+    [RegularExpression(@"^[a-zA-Z0-9_\-]+$", ErrorMessage = "帳號只允許英數字、底線、連字號")]
+    public string Username { get; set; } = string.Empty;
+
+    [EmailAddress(ErrorMessage = "Email 格式不正確")]
+    [MaxLength(100)]
+    public string Email { get; set; } = string.Empty;
+
+    public int? RoleId { get; set; }
+}
+
+public class B2eAdminUpdateRequest
+{
+    [EmailAddress(ErrorMessage = "Email 格式不正確")]
+    [MaxLength(100)]
+    public string Email { get; set; } = string.Empty;
+
+    public int? RoleId { get; set; }
+}
+
+// ── 可用權限常數 ──────────────────────────────────────────────────────
+public static class B2ePermissions
+{
+    public const string Dashboard     = "dashboard";
+    public const string Products      = "products";
+    public const string Categories    = "categories";
+    public const string Announcements = "announcements";
+    public const string Members       = "members";
+    public const string Homepage      = "homepage";
+    public const string Roles         = "roles";
+    public const string Admins        = "admins";
+
+    public static readonly string[] All =
+        [Dashboard, Products, Categories, Announcements, Members, Homepage, Roles, Admins];
+}
 
 // ── B2C 帳號管理（後台管理 B2C 用戶）─────────────────────────────────
 public class B2cUserDto

@@ -1,0 +1,19 @@
+@page "/"
+@model IndexModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>B2E Admin</title>
+</head>
+<body>
+<script>
+  if (localStorage.getItem('b2eToken')) {
+    location.replace('/b2e/admin');
+  } else {
+    location.replace('/b2e/login');
+  }
+</script>
+</body>
+</html>

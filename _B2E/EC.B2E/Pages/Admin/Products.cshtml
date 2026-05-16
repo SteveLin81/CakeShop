@@ -1,6 +1,6 @@
 @page "/b2e/admin/products"
 @model ProductsAdminModel
-@{ Layout = "_AdminLayout"; ViewData["Title"] = "商品管理"; }
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "商品管理"; ViewData["TitleKey"] = "product.title"; }
 
 <div class="b2e-page-header">
   <div>
@@ -29,7 +29,6 @@
 
   <!-- Table -->
   <el-table :data="filteredProducts" v-loading="loading" stripe style="width:100%">
-    <el-table-column prop="id" :label="t('common.id')" width="70" />
     <el-table-column :label="t('product.name')" min-width="160">
       <template #default="{ row }">
         <div style="font-weight:600">{{ row.name }}</div>
@@ -53,9 +52,6 @@
       <template #default="{ row }">
         <span v-if="row.isFeatured">⭐</span>
       </template>
-    </el-table-column>
-    <el-table-column :label="t('common.updatedAt')" width="140">
-      <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
     </el-table-column>
     <el-table-column :label="t('common.actions')" width="160" fixed="right">
       <template #default="{ row }">

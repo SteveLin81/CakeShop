@@ -1,6 +1,7 @@
 @{
     var pagePath = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
     string NavClass(string p) => pagePath.StartsWith(p) ? "b2e-nav-item active" : "b2e-nav-item";
+    var titleKey = ViewData["TitleKey"]?.ToString() ?? "dashboard.title";
 }
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -35,20 +36,26 @@
         </a>
 
         <div class="b2e-nav-section" style="margin-top:16px">{{ t('menu.managementSection') }}</div>
-        <a href="/b2e/admin/products" class="@NavClass("/b2e/admin/products")">
+        <a v-if="hasPermission('products')" href="/b2e/admin/products" class="@NavClass("/b2e/admin/products")">
           <span class="nav-icon">🎂</span> {{ t('menu.products') }}
         </a>
-        <a href="/b2e/admin/categories" class="@NavClass("/b2e/admin/categories")">
+        <a v-if="hasPermission('categories')" href="/b2e/admin/categories" class="@NavClass("/b2e/admin/categories")">
           <span class="nav-icon">🏷️</span> {{ t('menu.categories') }}
         </a>
-        <a href="/b2e/admin/announcements" class="@NavClass("/b2e/admin/announcements")">
+        <a v-if="hasPermission('announcements')" href="/b2e/admin/announcements" class="@NavClass("/b2e/admin/announcements")">
           <span class="nav-icon">📢</span> {{ t('menu.announcements') }}
         </a>
-        <a href="/b2e/admin/users" class="@NavClass("/b2e/admin/users")">
+        <a v-if="hasPermission('members')" href="/b2e/admin/users" class="@NavClass("/b2e/admin/users")">
           <span class="nav-icon">👥</span> {{ t('menu.users') }}
         </a>
-        <a href="/b2e/admin/homepage" class="@NavClass("/b2e/admin/homepage")">
+        <a v-if="hasPermission('homepage')" href="/b2e/admin/homepage" class="@NavClass("/b2e/admin/homepage")">
           <span class="nav-icon">🏠</span> {{ t('menu.homepage') }}
+        </a>
+        <a v-if="hasPermission('roles')" href="/b2e/admin/roles" class="@NavClass("/b2e/admin/roles")">
+          <span class="nav-icon">🔑</span> {{ t('menu.roles') }}
+        </a>
+        <a v-if="hasPermission('admins')" href="/b2e/admin/admins" class="@NavClass("/b2e/admin/admins")">
+          <span class="nav-icon">👨‍💼</span> {{ t('menu.admins') }}
         </a>
       </nav>
 
@@ -56,9 +63,13 @@
         <div class="b2e-user-avatar">{{ adminUsername.charAt(0).toUpperCase() }}</div>
         <div class="b2e-user-info">
           <div class="b2e-user-name">{{ adminUsername }}</div>
-          <div class="b2e-user-role">{{ t('menu.adminRole') }}</div>
+          <div class="b2e-user-role">{{ adminRole || t('menu.adminRole') }}</div>
         </div>
-        <button class="b2e-logout-btn" @@click="logout" title="{{ t('auth.logout') }}">⏻</button>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <a href="/b2e/admin/change-password" title="{{ t('menu.changePassword') }}"
+             style="color:rgba(255,255,255,.6);font-size:1rem;text-decoration:none;line-height:1">🔒</a>
+          <button class="b2e-logout-btn" @@click="logout" title="{{ t('auth.logout') }}">⏻</button>
+        </div>
       </div>
     </aside>
 
@@ -67,7 +78,7 @@
       <div class="b2e-topbar">
         <div class="b2e-topbar-left">
           <button class="b2e-hamburger" @@click="sidebarOpen = !sidebarOpen">☰</button>
-          <span class="b2e-breadcrumb">@ViewData["Title"]</span>
+          <span class="b2e-breadcrumb" v-text="t('@titleKey')"></span>
         </div>
         <div class="b2e-topbar-right">
           <div style="position:relative">
@@ -97,6 +108,7 @@
 
 </div><!-- /b2e-app -->
 
+<script>window.__b2eTitleKey = '@titleKey';</script>
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
 <script src="https://unpkg.com/vue-i18n@9/dist/vue-i18n.global.prod.js"></script>

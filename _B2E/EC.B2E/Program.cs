@@ -19,10 +19,15 @@ builder.Services.AddDbContext<CakeShopDbContext>(options =>
 builder.Services.AddSingleton<IEncryptionService>(
     sp => new EncryptionService(sp.GetRequiredService<IConfiguration>()));
 
-// ── B2E 專屬 Repository / Service ─────────────────────────────────────
+// ── B2E 認證 ──────────────────────────────────────────────────────────
 builder.Services.AddScoped<IB2eUserRepository,            B2eUserRepository>();
+builder.Services.AddScoped<IB2eRoleRepository,            B2eRoleRepository>();
 builder.Services.AddScoped<IB2eAuthService,               B2eAuthService>();
 builder.Services.AddScoped<B2eAuthFilter>();
+
+// ── B2E 管理功能 ──────────────────────────────────────────────────────
+builder.Services.AddScoped<IB2eRoleManagementService,     B2eRoleManagementService>();
+builder.Services.AddScoped<IB2eAdminManagementService,    B2eAdminManagementService>();
 
 // ── 商品 / 分類管理 ────────────────────────────────────────────────────
 builder.Services.AddScoped<IProductRepository,            ProductRepository>();

@@ -13,6 +13,7 @@ public class CakeShopDbContext : DbContext
     public DbSet<CartItem>     CartItems     => Set<CartItem>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<B2eUser>      B2eUsers      => Set<B2eUser>();
+    public DbSet<B2eRole>      B2eRoles      => Set<B2eRole>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -47,11 +48,22 @@ public class CakeShopDbContext : DbContext
 
         builder.Entity<Announcement>(e => e.HasKey(a => a.Id));
 
+        builder.Entity<B2eRole>(e =>
+        {
+            e.HasKey(r => r.Id);
+            e.ToTable("b2e_roles");
+            e.HasIndex(r => r.Name).IsUnique();
+        });
+
         builder.Entity<B2eUser>(e =>
         {
             e.HasKey(u => u.Id);
             e.ToTable("b2e_users");
             e.HasIndex(u => u.Username).IsUnique();
+            e.HasOne(u => u.Role)
+             .WithMany()
+             .HasForeignKey(u => u.RoleId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
     }
 

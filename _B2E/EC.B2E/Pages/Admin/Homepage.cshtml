@@ -1,6 +1,6 @@
 @page "/b2e/admin/homepage"
 @model HomepageAdminModel
-@{ Layout = "_AdminLayout"; ViewData["Title"] = "首頁設定"; }
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "首頁設定"; ViewData["TitleKey"] = "homepage.title"; }
 
 <div class="b2e-page-header">
   <div>
@@ -43,7 +43,6 @@
   </div>
 
   <el-table :data="filteredProducts" v-loading="loading" stripe style="width:100%">
-    <el-table-column prop="id" :label="t('common.id')" width="70" />
     <el-table-column :label="t('product.name')" min-width="180">
       <template #default="{ row }">
         <div style="display:flex;align-items:center;gap:10px">

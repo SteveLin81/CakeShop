@@ -22,8 +22,24 @@ const b2eApi = {
   delete: (url)        => b2eApi.request('DELETE', url),
 
   // ── 認證 ────────────────────────────────────────────────────────
-  login:         (username, password) => b2eApi.post('/auth/login', { username, password }),
-  validateToken: (token)              => b2eApi.post('/auth/validate', { token }),
+  login:          (username, password) => b2eApi.post('/auth/login', { username, password }),
+  validateToken:  (token)              => b2eApi.post('/auth/validate', { token }),
+  getMe:          ()                   => b2eApi.get('/auth/me'),
+  changePassword: (data)               => b2eApi.post('/auth/change-password', data),
+
+  // ── 角色管理 ─────────────────────────────────────────────────────
+  getRoles:    ()       => b2eApi.get('/roles'),
+  getRole:     (id)     => b2eApi.get(`/roles/${id}`),
+  createRole:  (data)   => b2eApi.post('/roles', data),
+  updateRole:  (id, d)  => b2eApi.put(`/roles/${id}`, d),
+  deleteRole:  (id)     => b2eApi.delete(`/roles/${id}`),
+
+  // ── 後台帳號管理 ─────────────────────────────────────────────────
+  getAdmins:    ()       => b2eApi.get('/admins'),
+  getAdmin:     (id)     => b2eApi.get(`/admins/${id}`),
+  createAdmin:  (data)   => b2eApi.post('/admins', data),
+  updateAdmin:  (id, d)  => b2eApi.put(`/admins/${id}`, d),
+  deleteAdmin:  (id)     => b2eApi.delete(`/admins/${id}`),
 
   // ── 商品 ────────────────────────────────────────────────────────
   getProducts:     ()       => b2eApi.get('/products'),

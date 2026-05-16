@@ -1,6 +1,6 @@
 @page "/b2e/admin/categories"
 @model CategoriesAdminModel
-@{ Layout = "_AdminLayout"; ViewData["Title"] = "分類管理"; }
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "分類管理"; ViewData["TitleKey"] = "category.title"; }
 
 <div class="b2e-page-header">
   <div>
@@ -23,22 +23,9 @@
   </div>
 
   <el-table :data="filteredCategories" v-loading="loading" stripe style="width:100%">
-    <el-table-column prop="id" :label="t('common.id')" width="70" />
-    <el-table-column :label="t('category.name')" min-width="120">
+    <el-table-column :label="t('category.name')" min-width="200">
       <template #default="{ row }">
-        <div style="font-weight:600">{{ row.name }}</div>
-        <div style="font-size:.8rem;color:var(--b2e-muted)">{{ row.nameEn }}</div>
-      </template>
-    </el-table-column>
-    <el-table-column label="JA / ZH-CN" min-width="160">
-      <template #default="{ row }">
-        <div style="font-size:.85rem">{{ row.nameJa }}</div>
-        <div style="font-size:.85rem;color:var(--b2e-muted)">{{ row.nameZhCn }}</div>
-      </template>
-    </el-table-column>
-    <el-table-column label="TH / KO / VI / MS" min-width="200">
-      <template #default="{ row }">
-        <div style="font-size:.8rem">{{ [row.nameTh, row.nameKo, row.nameVi, row.nameMs].filter(Boolean).join(' / ') }}</div>
+        <span>{{ localeName(row) }}</span>
       </template>
     </el-table-column>
     <el-table-column :label="t('common.actions')" width="160" fixed="right">
@@ -64,25 +51,25 @@
       </el-form-item>
     </el-tab-pane>
     <el-tab-pane :label="t('product.enTab')" name="en">
-      <el-form-item label="Name (EN)"><el-input v-model="form.nameEn" /></el-form-item>
+      <el-form-item :label="t('product.nameEn')"><el-input v-model="form.nameEn" /></el-form-item>
     </el-tab-pane>
     <el-tab-pane :label="t('product.jaTab')" name="ja">
-      <el-form-item label="カテゴリ名"><el-input v-model="form.nameJa" /></el-form-item>
+      <el-form-item :label="t('product.nameJa')"><el-input v-model="form.nameJa" /></el-form-item>
     </el-tab-pane>
     <el-tab-pane :label="t('product.zhCnTab')" name="zhCN">
-      <el-form-item label="分类名称"><el-input v-model="form.nameZhCn" /></el-form-item>
+      <el-form-item :label="t('product.nameZhCn')"><el-input v-model="form.nameZhCn" /></el-form-item>
     </el-tab-pane>
     <el-tab-pane :label="t('product.thTab')" name="th">
-      <el-form-item label="ชื่อหมวดหมู่"><el-input v-model="form.nameTh" /></el-form-item>
+      <el-form-item :label="t('product.nameTh')"><el-input v-model="form.nameTh" /></el-form-item>
     </el-tab-pane>
     <el-tab-pane :label="t('product.koTab')" name="ko">
-      <el-form-item label="카테고리 이름"><el-input v-model="form.nameKo" /></el-form-item>
+      <el-form-item :label="t('product.nameKo')"><el-input v-model="form.nameKo" /></el-form-item>
     </el-tab-pane>
     <el-tab-pane :label="t('product.viTab')" name="vi">
-      <el-form-item label="Tên danh mục"><el-input v-model="form.nameVi" /></el-form-item>
+      <el-form-item :label="t('product.nameVi')"><el-input v-model="form.nameVi" /></el-form-item>
     </el-tab-pane>
     <el-tab-pane :label="t('product.msTab')" name="ms">
-      <el-form-item label="Nama Kategori"><el-input v-model="form.nameMs" /></el-form-item>
+      <el-form-item :label="t('product.nameMs')"><el-input v-model="form.nameMs" /></el-form-item>
     </el-tab-pane>
   </el-tabs>
   <template #footer>
@@ -109,10 +96,21 @@ createApp({
     const activeTab   = ref('zhTW');
     const form        = reactive({ name:'', nameEn:'', nameJa:'', nameZhCn:'', nameTh:'', nameKo:'', nameVi:'', nameMs:'' });
 
+    const localeFieldMap = {
+      'zh-TW': 'name', 'zh-CN': 'nameZhCn', 'en': 'nameEn',
+      'ja': 'nameJa', 'th': 'nameTh', 'ko': 'nameKo', 'vi': 'nameVi', 'ms': 'nameMs',
+    };
+    function localeName(row) {
+      const field = localeFieldMap[common.locale.value] || 'name';
+      return row[field] || row.name;
+    }
+
     const filteredCategories = computed(() => {
       if (!searchText.value.trim()) return categories.value;
       const q = searchText.value.toLowerCase();
+      const field = localeFieldMap[common.locale.value] || 'name';
       return categories.value.filter(c =>
+        (c[field] || c.name || '').toLowerCase().includes(q) ||
         c.name?.toLowerCase().includes(q) || c.nameEn?.toLowerCase().includes(q));
     });
 
@@ -166,7 +164,7 @@ createApp({
     onMounted(async () => { await common.checkAuth(); await loadData(); });
 
     return { ...common, loading, saving, categories, searchText, filteredCategories,
-             dialogVisible, isEdit, activeTab, form, openCreate, openEdit, submitForm, doDelete };
+             dialogVisible, isEdit, activeTab, form, localeName, openCreate, openEdit, submitForm, doDelete };
   }
 }).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
 </script>

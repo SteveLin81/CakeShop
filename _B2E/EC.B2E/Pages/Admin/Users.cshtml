@@ -1,6 +1,6 @@
 @page "/b2e/admin/users"
 @model UsersAdminModel
-@{ Layout = "_AdminLayout"; ViewData["Title"] = "B2C 帳號管理"; }
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "前台會員管理"; ViewData["TitleKey"] = "user.title"; }
 
 <div class="b2e-page-header">
   <div>
@@ -24,13 +24,12 @@
   </div>
 
   <el-table :data="filteredUsers" v-loading="loading" stripe style="width:100%">
-    <el-table-column prop="id" :label="t('common.id')" width="70" />
-    <el-table-column prop="username" :label="t('user.username')" min-width="140" />
-    <el-table-column prop="email" :label="t('user.email')" min-width="200" />
-    <el-table-column :label="t('common.updatedAt')" width="140">
-      <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
+    <el-table-column :label="t('user.username')" min-width="140">
+      <template #default="{ row }">{{ row.username }}</template>
     </el-table-column>
-    <el-table-column prop="updateCount" :label="t('common.updateCount')" width="90" />
+    <el-table-column :label="t('user.email')" min-width="200">
+      <template #default="{ row }">{{ row.email }}</template>
+    </el-table-column>
     <el-table-column :label="t('common.actions')" width="160" fixed="right">
       <template #default="{ row }">
         <button class="btn-outline" style="margin-right:8px" @@click="openEdit(row)">✏️ {{ t('common.edit') }}</button>

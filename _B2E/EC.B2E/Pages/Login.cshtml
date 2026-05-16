@@ -6,7 +6,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>登入 – B2E 後台</title>
+  <title>B2E Admin</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/b2e.css">
@@ -48,17 +48,21 @@
 <script src="/js/b2e-api.js"></script>
 <script src="/js/b2e-common.js"></script>
 <script>
-const { createApp, ref, onMounted } = Vue;
+const { createApp, ref, onMounted, watchEffect } = Vue;
 
 createApp({
   setup() {
-    const { t } = b2eI18n.global;
+    const { t, locale } = b2eI18n.global;
     const form    = ref({ username: '', password: '' });
     const errors  = ref({});
     const loading = ref(false);
 
+    watchEffect(() => {
+      const _ = locale.value;
+      document.title = t('auth.loginTitle') + ' – B2E Admin';
+    });
+
     onMounted(() => {
-      // 若已登入則跳轉
       const token = localStorage.getItem('b2eToken');
       if (token) location.href = '/b2e/admin';
     });

@@ -198,22 +198,39 @@ await Execute(db, """
     );
 """);
 
-// b2e_users（後台管理員帳號，獨立於 B2C users）
+// b2e_roles（後台角色，必須在 b2e_users 之前建立）
 await Execute(db, """
-    CREATE TABLE IF NOT EXISTS b2e_users (
-        id            SERIAL       PRIMARY KEY,
-        username      VARCHAR(50)  UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        email         VARCHAR(100) NOT NULL DEFAULT '',
-        created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-        created_by    VARCHAR(100) NOT NULL DEFAULT 'system',
-        updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-        updated_by    VARCHAR(100) NOT NULL DEFAULT 'system',
-        update_count  INTEGER      NOT NULL DEFAULT 0
+    CREATE TABLE IF NOT EXISTS b2e_roles (
+        id           SERIAL       PRIMARY KEY,
+        name         VARCHAR(50)  UNIQUE NOT NULL,
+        description  VARCHAR(200) NOT NULL DEFAULT '',
+        permissions  TEXT         NOT NULL DEFAULT '[]',
+        created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        created_by   VARCHAR(100) NOT NULL DEFAULT 'system',
+        updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_by   VARCHAR(100) NOT NULL DEFAULT 'system',
+        update_count INTEGER      NOT NULL DEFAULT 0
     );
 """);
 
-Console.WriteLine("✔ 6 張資料表建立完成（含 b2e_users）");
+// b2e_users（後台管理員帳號，獨立於 B2C users）
+await Execute(db, """
+    CREATE TABLE IF NOT EXISTS b2e_users (
+        id                   SERIAL       PRIMARY KEY,
+        username             VARCHAR(50)  UNIQUE NOT NULL,
+        password_hash        VARCHAR(255) NOT NULL,
+        email                VARCHAR(100) NOT NULL DEFAULT '',
+        role_id              INTEGER      REFERENCES b2e_roles(id) ON DELETE SET NULL,
+        must_change_password BOOLEAN      NOT NULL DEFAULT FALSE,
+        created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        created_by           VARCHAR(100) NOT NULL DEFAULT 'system',
+        updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_by           VARCHAR(100) NOT NULL DEFAULT 'system',
+        update_count         INTEGER      NOT NULL DEFAULT 0
+    );
+""");
+
+Console.WriteLine("✔ 7 張資料表建立完成（含 b2e_roles / b2e_users）");
 
 // ── Step 2b：新增多語系欄位（IF NOT EXISTS，安全重複執行）─────────────
 await Execute(db, """
@@ -424,12 +441,34 @@ await Execute(db, $"""
 Console.WriteLine("  ✔ users（test / test）");
 
 var b2eHash = ComputeHash("testb2e");
+// 先插入預設角色
 await Execute(db, $"""
-    INSERT INTO b2e_users (username, password_hash, email, created_by, updated_by)
-    VALUES ('testb2e', '{b2eHash}', 'admin@cakeshop.com', 'system', 'system')
-    ON CONFLICT (username) DO NOTHING;
+    INSERT INTO b2e_roles (name, description, permissions, created_by, updated_by) VALUES
+        ('admin',   '系統管理員，擁有全部權限',                '["dashboard","products","categories","announcements","members","homepage","roles","admins"]', 'system', 'system'),
+        ('商品部門', '商品管理員，管理商品、分類與首頁設定',    '["dashboard","products","categories","homepage"]',                                          'system', 'system'),
+        ('客服部門', '客服人員，管理前台會員與公告',            '["dashboard","announcements","members"]',                                                    'system', 'system')
+    ON CONFLICT (name) DO NOTHING;
 """);
-Console.WriteLine("  ✔ b2e_users（testb2e / testb2e）");
+Console.WriteLine("  ✔ b2e_roles（admin / 商品部門 / 客服部門）");
+
+// 先確保欄位存在（idempotent），再做 INSERT/UPDATE
+await Execute(db, """
+    ALTER TABLE b2e_users ADD COLUMN IF NOT EXISTS role_id INT REFERENCES b2e_roles(id) ON DELETE SET NULL;
+    ALTER TABLE b2e_users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+""");
+
+await Execute(db, $"""
+    INSERT INTO b2e_users (username, password_hash, email, role_id, must_change_password, created_by, updated_by)
+    SELECT 'testb2e', '{b2eHash}', 'admin@cakeshop.com',
+           (SELECT id FROM b2e_roles WHERE name = 'admin'), FALSE, 'system', 'system'
+    WHERE NOT EXISTS (SELECT 1 FROM b2e_users WHERE username = 'testb2e');
+
+    UPDATE b2e_users
+    SET role_id = (SELECT id FROM b2e_roles WHERE name = 'admin'),
+        must_change_password = FALSE
+    WHERE username = 'testb2e';
+""");
+Console.WriteLine("  ✔ b2e_users（testb2e / testb2e，角色：admin）");
 
 await Execute(db, """
     INSERT INTO announcements (content,content_en,content_ja,content_zh_cn,content_th,content_ko,content_vi,content_ms,is_active)

@@ -3,7 +3,7 @@ const messages = {
     nav: {
       home: '首頁', products: '產品', contact: '聯絡我們',
       login: '登入', logout: '登出', cart: '購物車',
-      welcome: '歡迎', langLabel: '繁體中文'
+      welcome: '歡迎', langLabel: '繁體中文', brand: '甜蜜烘焙坊'
     },
     home: {
       heroTitle: '甜蜜烘焙坊',
@@ -64,7 +64,7 @@ const messages = {
     nav: {
       home: 'Home', products: 'Products', contact: 'Contact',
       login: 'Login', logout: 'Logout', cart: 'Cart',
-      welcome: 'Welcome', langLabel: 'English'
+      welcome: 'Welcome', langLabel: 'English', brand: 'Sweet Bakes'
     },
     home: {
       heroTitle: 'Sweet Bakes',
@@ -125,7 +125,7 @@ const messages = {
     nav: {
       home: 'ホーム', products: '商品', contact: 'お問い合わせ',
       login: 'ログイン', logout: 'ログアウト', cart: 'カート',
-      welcome: 'ようこそ', langLabel: '日本語'
+      welcome: 'ようこそ', langLabel: '日本語', brand: 'スイートベイクス'
     },
     home: {
       heroTitle: 'スイートベイクス',
@@ -186,7 +186,7 @@ const messages = {
     nav: {
       home: '首页', products: '产品', contact: '联系我们',
       login: '登录', logout: '退出', cart: '购物车',
-      welcome: '欢迎', langLabel: '简体中文'
+      welcome: '欢迎', langLabel: '简体中文', brand: '甜蜜烘焙坊'
     },
     home: {
       heroTitle: '甜蜜烘焙坊',
@@ -247,7 +247,7 @@ const messages = {
     nav: {
       home: 'หน้าแรก', products: 'สินค้า', contact: 'ติดต่อเรา',
       login: 'เข้าสู่ระบบ', logout: 'ออกจากระบบ', cart: 'ตะกร้า',
-      welcome: 'ยินดีต้อนรับ', langLabel: 'ภาษาไทย'
+      welcome: 'ยินดีต้อนรับ', langLabel: 'ภาษาไทย', brand: 'สวีทเบคส์'
     },
     home: {
       heroTitle: 'สวีทเบคส์', heroSubtitle: 'ทุกคำคือผลงานศิลปะ',
@@ -295,7 +295,7 @@ const messages = {
     nav: {
       home: '홈', products: '상품', contact: '문의',
       login: '로그인', logout: '로그아웃', cart: '장바구니',
-      welcome: '환영합니다', langLabel: '한국어'
+      welcome: '환영합니다', langLabel: '한국어', brand: '스위트 베이크스'
     },
     home: {
       heroTitle: '스위트 베이크스', heroSubtitle: '한 입 한 입이 예술입니다',
@@ -342,7 +342,7 @@ const messages = {
     nav: {
       home: 'Trang Chủ', products: 'Sản Phẩm', contact: 'Liên Hệ',
       login: 'Đăng Nhập', logout: 'Đăng Xuất', cart: 'Giỏ Hàng',
-      welcome: 'Chào Mừng', langLabel: 'Tiếng Việt'
+      welcome: 'Chào Mừng', langLabel: 'Tiếng Việt', brand: 'Sweet Bakes'
     },
     home: {
       heroTitle: 'Sweet Bakes', heroSubtitle: 'Mỗi miếng là một tác phẩm nghệ thuật',
@@ -389,7 +389,7 @@ const messages = {
     nav: {
       home: 'Laman Utama', products: 'Produk', contact: 'Hubungi Kami',
       login: 'Log Masuk', logout: 'Log Keluar', cart: 'Troli',
-      welcome: 'Selamat Datang', langLabel: 'Bahasa Melayu'
+      welcome: 'Selamat Datang', langLabel: 'Bahasa Melayu', brand: 'Sweet Bakes'
     },
     home: {
       heroTitle: 'Sweet Bakes', heroSubtitle: 'Setiap gigitan adalah karya seni',
