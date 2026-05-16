@@ -31,4 +31,5 @@ public class ProductDto
     public string CategoryNameVi { get; set; } = string.Empty;
     public string CategoryNameMs { get; set; } = string.Empty;
     public bool IsAvailable { get; set; }
+    public bool IsFeatured  { get; set; }
 }

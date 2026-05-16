@@ -24,4 +24,5 @@ public class Product : AuditableEntity
     public int CategoryId { get; set; }
     public Category? Category { get; set; }
     public bool IsAvailable { get; set; } = true;
+    public bool IsFeatured  { get; set; } = false;
 }

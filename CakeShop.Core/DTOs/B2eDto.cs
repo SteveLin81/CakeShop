@@ -69,6 +69,21 @@ public class ProductSaveRequest
     [Range(1, int.MaxValue, ErrorMessage = "請選擇有效分類")]
     public int     CategoryId      { get; set; }
     public bool    IsAvailable     { get; set; } = true;
+    public bool    IsFeatured      { get; set; } = false;
+}
+
+// ── 分類管理 ───────────────────────────────────────────────────────────
+public class CategorySaveRequest
+{
+    [Required(ErrorMessage = "分類名稱為必填")]
+    [MaxLength(50)] public string Name    { get; set; } = string.Empty;
+    [MaxLength(50)] public string NameEn  { get; set; } = string.Empty;
+    [MaxLength(50)] public string NameJa  { get; set; } = string.Empty;
+    [MaxLength(50)] public string NameZhCn{ get; set; } = string.Empty;
+    [MaxLength(50)] public string NameTh  { get; set; } = string.Empty;
+    [MaxLength(50)] public string NameKo  { get; set; } = string.Empty;
+    [MaxLength(50)] public string NameVi  { get; set; } = string.Empty;
+    [MaxLength(50)] public string NameMs  { get; set; } = string.Empty;
 }
 
 // ── 公告管理 ───────────────────────────────────────────────────────────

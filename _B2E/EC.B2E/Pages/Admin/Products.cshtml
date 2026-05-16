@@ -42,11 +42,16 @@
     <el-table-column :label="t('product.price')" width="100">
       <template #default="{ row }">NT$ {{ row.price }}</template>
     </el-table-column>
-    <el-table-column :label="t('product.isAvailable')" width="100">
+    <el-table-column :label="t('product.isAvailable')" width="90">
       <template #default="{ row }">
         <span class="badge" :class="row.isAvailable ? 'badge-success' : 'badge-danger'">
           {{ row.isAvailable ? t('common.available') : t('common.unavailable') }}
         </span>
+      </template>
+    </el-table-column>
+    <el-table-column :label="t('homepage.isFeatured')" width="80">
+      <template #default="{ row }">
+        <span v-if="row.isFeatured">⭐</span>
       </template>
     </el-table-column>
     <el-table-column :label="t('common.updatedAt')" width="140">
@@ -80,10 +85,21 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="t('product.imageUrl')" style="grid-column:1/-1">
-          <el-input v-model="form.imageUrl" />
+          <div style="display:flex;gap:8px;align-items:center;width:100%">
+            <el-input v-model="form.imageUrl" style="flex:1" />
+            <label style="cursor:pointer">
+              <input type="file" accept="image/*" style="display:none" @@change="handleImageUpload($event)">
+              <span class="btn-outline" style="white-space:nowrap">📤 {{ t('common.upload') }}</span>
+            </label>
+          </div>
+          <img v-if="form.imageUrl" :src="form.imageUrl" style="margin-top:8px;max-height:80px;border-radius:4px"
+               @@error="$event.target.style.display='none'">
         </el-form-item>
         <el-form-item :label="t('product.isAvailable')" style="grid-column:1/-1">
           <el-switch v-model="form.isAvailable" />
+          &nbsp;&nbsp;
+          <el-switch v-model="form.isFeatured" active-text="⭐" />
+          <span style="font-size:.85rem;color:var(--b2e-muted);margin-left:4px">{{ t('homepage.isFeatured') }}</span>
         </el-form-item>
       </div>
     </el-tab-pane>
@@ -179,9 +195,21 @@ createApp({
         description: row.description, descriptionEn: row.descriptionEn, descriptionJa: row.descriptionJa,
         descriptionZhCn: row.descriptionZhCn, descriptionTh: row.descriptionTh||'', descriptionKo: row.descriptionKo||'',
         descriptionVi: row.descriptionVi||'', descriptionMs: row.descriptionMs||'',
-        price: row.price, imageUrl: row.imageUrl, categoryId: row.categoryId, isAvailable: row.isAvailable,
+        price: row.price, imageUrl: row.imageUrl, categoryId: row.categoryId,
+        isAvailable: row.isAvailable, isFeatured: row.isFeatured || false,
       });
       dialogVisible.value = true;
+    }
+
+    async function handleImageUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const res = await b2eApi.uploadProductImage(file);
+        if (res.success) { form.imageUrl = res.data.url; common.showToast(common.t('common.success')); }
+        else common.showToast(res.message || common.t('common.error'));
+      } catch { common.showToast(common.t('common.error')); }
+      event.target.value = '';
     }
 
     async function submitForm() {
@@ -213,7 +241,7 @@ createApp({
     });
 
     return { ...common, loading, saving, products, categories, searchText, filterCat, filteredProducts,
-             dialogVisible, isEdit, activeTab, form, openCreate, openEdit, submitForm, doDelete, formatDate };
+             dialogVisible, isEdit, activeTab, form, openCreate, openEdit, submitForm, doDelete, handleImageUpload, formatDate };
   }
 }).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
 </script>

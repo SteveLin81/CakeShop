@@ -239,6 +239,13 @@ await Execute(db, """
 """);
 Console.WriteLine("✔ 多語系欄位就緒");
 
+// ── Step 2b-2：新增 is_featured 欄位 ────────────────────────────────
+await Execute(db, """
+    ALTER TABLE products
+        ADD COLUMN IF NOT EXISTS is_featured BOOLEAN NOT NULL DEFAULT FALSE;
+""");
+Console.WriteLine("✔ is_featured 欄位就緒");
+
 // ── Step 2c：新增稽核欄位（IF NOT EXISTS，安全重複執行）────────────────
 await Execute(db, """
     ALTER TABLE categories

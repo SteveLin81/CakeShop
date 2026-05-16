@@ -24,10 +24,11 @@ builder.Services.AddScoped<IB2eUserRepository,            B2eUserRepository>();
 builder.Services.AddScoped<IB2eAuthService,               B2eAuthService>();
 builder.Services.AddScoped<B2eAuthFilter>();
 
-// ── 商品管理 ──────────────────────────────────────────────────────────
+// ── 商品 / 分類管理 ────────────────────────────────────────────────────
 builder.Services.AddScoped<IProductRepository,            ProductRepository>();
 builder.Services.AddScoped<IProductService,               ProductService>();
 builder.Services.AddScoped<IProductManagementService,     ProductManagementService>();
+builder.Services.AddScoped<ICategoryManagementService,    CategoryManagementService>();
 
 // ── 公告管理 ──────────────────────────────────────────────────────────
 builder.Services.AddScoped<IAnnouncementRepository,       AnnouncementRepository>();

@@ -114,7 +114,10 @@ createApp({
                   'th': p.categoryNameTh, 'ko': p.categoryNameKo, 'vi': p.categoryNameVi, 'ms': p.categoryNameMs };
       return m[common.locale.value] || p.categoryName;
     }
-    const carouselProducts = computed(() => [...products.value].reverse().slice(0, 4));
+    const carouselProducts = computed(() => {
+      const featured = products.value.filter(p => p.isFeatured);
+      return featured.length ? featured.slice(0, 6) : [...products.value].reverse().slice(0, 4);
+    });
 
     onMounted(async () => {
       dismissLoader();

@@ -97,4 +97,27 @@ public class B2eProductController : ControllerBase
             return BadRequest(ApiResult<object>.Fail("商品刪除失敗，請稍後再試"));
         }
     }
+
+    [HttpPost("upload-image")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<IActionResult> UploadImage(IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(ApiResult<object>.Fail("請選擇圖片檔案"));
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp" or ".gif"))
+            return BadRequest(ApiResult<object>.Fail("僅支援 jpg / png / webp / gif 格式"));
+
+        var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "products");
+        Directory.CreateDirectory(uploadDir);
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        var filePath = Path.Combine(uploadDir, fileName);
+
+        await using var stream = System.IO.File.Create(filePath);
+        await file.CopyToAsync(stream);
+
+        var url = $"/uploads/products/{fileName}";
+        return Ok(ApiResult<object>.Ok(new { url }, "圖片上傳成功"));
+    }
 }

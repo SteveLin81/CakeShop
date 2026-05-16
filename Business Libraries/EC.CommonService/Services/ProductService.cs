@@ -78,6 +78,7 @@ public class ProductService : IProductService
         CategoryNameKo = p.Category?.NameKo ?? string.Empty,
         CategoryNameVi = p.Category?.NameVi ?? string.Empty,
         CategoryNameMs = p.Category?.NameMs ?? string.Empty,
-        IsAvailable = p.IsAvailable
+        IsAvailable = p.IsAvailable,
+        IsFeatured  = p.IsFeatured,
     };
 }

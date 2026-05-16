@@ -1,0 +1,137 @@
+@page "/b2e/admin/homepage"
+@model HomepageAdminModel
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "首頁設定"; }
+
+<div class="b2e-page-header">
+  <div>
+    <div class="b2e-page-title">{{ t('homepage.title') }}</div>
+    <div class="b2e-page-subtitle">{{ t('homepage.featuredHint') }}</div>
+  </div>
+  <button class="btn-outline" @@click="loadData">{{ t('common.refresh') }}</button>
+</div>
+
+<!-- 精選統計 -->
+<div class="b2e-stats-grid" style="margin-bottom:16px">
+  <div class="b2e-stat-card">
+    <div class="b2e-stat-icon blue">⭐</div>
+    <div>
+      <div class="b2e-stat-number">{{ featuredCount }}</div>
+      <div class="b2e-stat-label">{{ t('homepage.isFeatured') }}</div>
+    </div>
+  </div>
+  <div class="b2e-stat-card">
+    <div class="b2e-stat-icon green">🎂</div>
+    <div>
+      <div class="b2e-stat-number">{{ products.length }}</div>
+      <div class="b2e-stat-label">{{ t('dashboard.totalProducts') }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- 精選商品列表 -->
+<div class="b2e-card">
+  <div class="b2e-toolbar">
+    <div class="b2e-toolbar-left">
+      <el-input v-model="searchText" :placeholder="t('common.search')" clearable style="width:260px">
+        <template #prefix><span>🔍</span></template>
+      </el-input>
+      <el-select v-model="filterFeatured" :placeholder="t('common.status')" clearable style="width:140px">
+        <el-option :value="true"  :label="t('homepage.isFeatured')" />
+        <el-option :value="false" :label="t('common.inactive')" />
+      </el-select>
+    </div>
+  </div>
+
+  <el-table :data="filteredProducts" v-loading="loading" stripe style="width:100%">
+    <el-table-column prop="id" :label="t('common.id')" width="70" />
+    <el-table-column :label="t('product.name')" min-width="180">
+      <template #default="{ row }">
+        <div style="display:flex;align-items:center;gap:10px">
+          <img v-if="row.imageUrl" :src="row.imageUrl" style="width:40px;height:30px;object-fit:cover;border-radius:4px"
+               @@error="$event.target.style.display='none'">
+          <div>
+            <div style="font-weight:600">{{ row.name }}</div>
+            <div style="font-size:.8rem;color:var(--b2e-muted)">{{ row.nameEn }}</div>
+          </div>
+        </div>
+      </template>
+    </el-table-column>
+    <el-table-column :label="t('product.category')" width="100">
+      <template #default="{ row }">{{ row.categoryName }}</template>
+    </el-table-column>
+    <el-table-column :label="t('product.price')" width="100">
+      <template #default="{ row }">NT$ {{ row.price }}</template>
+    </el-table-column>
+    <el-table-column :label="t('product.isAvailable')" width="90">
+      <template #default="{ row }">
+        <span class="badge" :class="row.isAvailable ? 'badge-success' : 'badge-danger'">
+          {{ row.isAvailable ? t('common.available') : t('common.unavailable') }}
+        </span>
+      </template>
+    </el-table-column>
+    <el-table-column :label="t('homepage.isFeatured')" width="100">
+      <template #default="{ row }">
+        <el-switch v-model="row.isFeatured" @@change="toggleFeatured(row)" :loading="row._saving" />
+      </template>
+    </el-table-column>
+  </el-table>
+</div>
+
+@section Scripts {
+<script>
+const { createApp, ref, reactive, computed, onMounted } = Vue;
+createApp({
+  setup() {
+    const common       = useB2eCommon();
+    const loading      = ref(false);
+    const products     = ref([]);
+    const searchText   = ref('');
+    const filterFeatured = ref(null);
+
+    const featuredCount = computed(() => products.value.filter(p => p.isFeatured).length);
+
+    const filteredProducts = computed(() => {
+      let list = products.value;
+      if (filterFeatured.value !== null && filterFeatured.value !== '')
+        list = list.filter(p => p.isFeatured === filterFeatured.value);
+      if (searchText.value.trim()) {
+        const q = searchText.value.toLowerCase();
+        list = list.filter(p => p.name?.toLowerCase().includes(q) || p.nameEn?.toLowerCase().includes(q));
+      }
+      return list;
+    });
+
+    async function loadData() {
+      loading.value = true;
+      try {
+        const r = await b2eApi.getProducts();
+        products.value = (r.data ?? []).map(p => ({ ...p, _saving: false }));
+      } catch { common.showToast(common.t('common.error')); }
+      finally { loading.value = false; }
+    }
+
+    async function toggleFeatured(row) {
+      row._saving = true;
+      try {
+        const res = await b2eApi.updateProduct(row.id, {
+          name: row.name, nameEn: row.nameEn, nameJa: row.nameJa, nameZhCn: row.nameZhCn,
+          nameTh: row.nameTh||'', nameKo: row.nameKo||'', nameVi: row.nameVi||'', nameMs: row.nameMs||'',
+          description: row.description||'', descriptionEn: row.descriptionEn||'',
+          descriptionJa: row.descriptionJa||'', descriptionZhCn: row.descriptionZhCn||'',
+          descriptionTh: row.descriptionTh||'', descriptionKo: row.descriptionKo||'',
+          descriptionVi: row.descriptionVi||'', descriptionMs: row.descriptionMs||'',
+          price: row.price, imageUrl: row.imageUrl||'', categoryId: row.categoryId,
+          isAvailable: row.isAvailable, isFeatured: row.isFeatured,
+        });
+        if (!res.success) { row.isFeatured = !row.isFeatured; common.showToast(common.t('common.error')); }
+      } catch { row.isFeatured = !row.isFeatured; common.showToast(common.t('common.error')); }
+      finally { row._saving = false; }
+    }
+
+    onMounted(async () => { await common.checkAuth(); await loadData(); });
+
+    return { ...common, loading, products, searchText, filterFeatured, featuredCount, filteredProducts, loadData, toggleFeatured };
+  }
+}).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
+</script>
+}

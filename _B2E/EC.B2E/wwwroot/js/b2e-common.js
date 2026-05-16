@@ -71,7 +71,7 @@ function emptyProductForm() {
     name: '', nameEn: '', nameJa: '', nameZhCn: '', nameTh: '', nameKo: '', nameVi: '', nameMs: '',
     description: '', descriptionEn: '', descriptionJa: '', descriptionZhCn: '',
     descriptionTh: '', descriptionKo: '', descriptionVi: '', descriptionMs: '',
-    price: 0, imageUrl: '', categoryId: null, isAvailable: true,
+    price: 0, imageUrl: '', categoryId: null, isAvailable: true, isFeatured: false,
   };
 }
 

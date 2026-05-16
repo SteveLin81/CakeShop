@@ -32,6 +32,21 @@ const b2eApi = {
   createProduct:   (data)   => b2eApi.post('/products', data),
   updateProduct:   (id, d)  => b2eApi.put(`/products/${id}`, d),
   deleteProduct:   (id)     => b2eApi.delete(`/products/${id}`),
+  uploadProductImage: async (file) => {
+    const headers = {};
+    const token = localStorage.getItem('b2eToken');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const fd = new FormData(); fd.append('file', file);
+    const res = await fetch(`${B2E_API}/products/upload-image`, { method: 'POST', headers, body: fd });
+    return JSON.parse(await res.text());
+  },
+
+  // ── 分類 ────────────────────────────────────────────────────────
+  getAllCategories:    ()       => b2eApi.get('/categories'),
+  getCategory:        (id)     => b2eApi.get(`/categories/${id}`),
+  createCategory:     (data)   => b2eApi.post('/categories', data),
+  updateCategory:     (id, d)  => b2eApi.put(`/categories/${id}`, d),
+  deleteCategory:     (id)     => b2eApi.delete(`/categories/${id}`),
 
   // ── 公告 ────────────────────────────────────────────────────────
   getAnnouncements:    ()      => b2eApi.get('/announcements'),

@@ -74,6 +74,7 @@ public class ProductManagementService : IProductManagementService
         ImageUrl        = r.ImageUrl,
         CategoryId      = r.CategoryId,
         IsAvailable     = r.IsAvailable,
+        IsFeatured      = r.IsFeatured,
     };
 
     private static void MapRequestToEntity(ProductSaveRequest r, Product p)
@@ -86,5 +87,6 @@ public class ProductManagementService : IProductManagementService
         p.DescriptionVi = r.DescriptionVi; p.DescriptionMs = r.DescriptionMs;
         p.Price = r.Price; p.ImageUrl = r.ImageUrl;
         p.CategoryId = r.CategoryId; p.IsAvailable = r.IsAvailable;
+        p.IsFeatured = r.IsFeatured;
     }
 }

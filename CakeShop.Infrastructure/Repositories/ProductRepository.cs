@@ -23,7 +23,30 @@ public class ProductRepository : IProductRepository
                .Where(p => p.CategoryId == categoryId).ToListAsync();
 
     public async Task<IEnumerable<Category>> GetCategoriesAsync()
-        => await _ctx.Categories.AsNoTracking().ToListAsync();
+        => await _ctx.Categories.OrderBy(c => c.Name).AsNoTracking().ToListAsync();
+
+    public async Task<Category?> GetCategoryByIdAsync(int id)
+        => await _ctx.Categories.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
+
+    public async Task<Category> CreateCategoryAsync(Category category)
+    {
+        _ctx.Categories.Add(category);
+        await _ctx.SaveChangesAsync();
+        return category;
+    }
+
+    public async Task<Category> UpdateCategoryAsync(Category category)
+    {
+        _ctx.Categories.Update(category);
+        await _ctx.SaveChangesAsync();
+        return await _ctx.Categories.AsNoTracking().FirstAsync(c => c.Id == category.Id);
+    }
+
+    public async Task DeleteCategoryAsync(int id)
+    {
+        var cat = await _ctx.Categories.FindAsync(id);
+        if (cat is not null) { _ctx.Categories.Remove(cat); await _ctx.SaveChangesAsync(); }
+    }
 
     public async Task<Product> CreateAsync(Product product)
     {
