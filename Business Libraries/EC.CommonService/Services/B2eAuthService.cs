@@ -135,8 +135,16 @@ public class B2eAuthService : IB2eAuthService
               <p style="color:#7f8c8d;font-size:.85rem">若您未提出此請求，請忽略此郵件。</p>
             </div>
             """;
-        try { await _email.SendAsync(email, "【CakeShop B2E】後台密碼重設連結", body); }
-        catch (Exception ex) { _logger.LogWarning(ex, "B2E 忘記密碼發信失敗 {Email}", email); }
+        try
+        {
+            await _email.SendAsync(email, "【CakeShop B2E】後台密碼重設連結", body);
+            _logger.LogInformation("B2E 忘記密碼發信成功 {Email}", email);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "B2E 忘記密碼發信失敗 {Email}，錯誤：{Msg}", email, ex.Message);
+            _logger.LogWarning("【開發用】重設連結：{Url}", resetUrl);
+        }
         return true;
     }
 

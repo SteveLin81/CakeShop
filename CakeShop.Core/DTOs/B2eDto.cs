@@ -71,7 +71,8 @@ public class B2eAdminCreateRequest
     [RegularExpression(@"^[a-zA-Z0-9_\-]+$", ErrorMessage = "帳號只允許英數字、底線、連字號")]
     public string Username { get; set; } = string.Empty;
 
-    [EmailAddress(ErrorMessage = "Email 格式不正確")]
+    [Required(ErrorMessage = "Email 為必填")]
+    [RegularExpression(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", ErrorMessage = "Email 格式不正確")]
     [MaxLength(100)]
     public string Email { get; set; } = string.Empty;
 
@@ -80,7 +81,7 @@ public class B2eAdminCreateRequest
 
 public class B2eAdminUpdateRequest
 {
-    [EmailAddress(ErrorMessage = "Email 格式不正確")]
+    [RegularExpression(@"^$|^[^@\s]+@[^@\s]+\.[^@\s]+$", ErrorMessage = "Email 格式不正確")]
     [MaxLength(100)]
     public string Email { get; set; } = string.Empty;
 
@@ -126,14 +127,14 @@ public class B2cUserCreateRequest
     [MaxLength(100, ErrorMessage = "密碼不得超過 100 個字元")]
     public string Password { get; set; } = string.Empty;
 
-    [EmailAddress(ErrorMessage = "Email 格式不正確")]
+    [RegularExpression(@"^$|^[^@\s]+@[^@\s]+\.[^@\s]+$", ErrorMessage = "Email 格式不正確")]
     [MaxLength(100, ErrorMessage = "Email 不得超過 100 個字元")]
     public string Email { get; set; } = string.Empty;
 }
 
 public class B2cUserUpdateRequest
 {
-    [EmailAddress(ErrorMessage = "Email 格式不正確")]
+    [RegularExpression(@"^$|^[^@\s]+@[^@\s]+\.[^@\s]+$", ErrorMessage = "Email 格式不正確")]
     [MaxLength(100, ErrorMessage = "Email 不得超過 100 個字元")]
     public string  Email       { get; set; } = string.Empty;
 

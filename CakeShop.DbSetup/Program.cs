@@ -435,8 +435,8 @@ Console.WriteLine("  ✔ products（10 筆，8 語系）");
 var hash = ComputeHash("test");
 await Execute(db, $"""
     INSERT INTO users (username, password_hash, email)
-    VALUES ('test', '{hash}', 'test@cakeshop.com')
-    ON CONFLICT (username) DO NOTHING;
+    VALUES ('test', '{hash}', 'a32132154@gmail.com')
+    ON CONFLICT (username) DO UPDATE SET email = EXCLUDED.email;
 """);
 Console.WriteLine("  ✔ users（test / test）");
 
@@ -463,13 +463,14 @@ await Execute(db, """
 
 await Execute(db, $"""
     INSERT INTO b2e_users (username, password_hash, email, role_id, must_change_password, created_by, updated_by)
-    SELECT 'testb2e', '{b2eHash}', 'admin@cakeshop.com',
+    SELECT 'testb2e', '{b2eHash}', 'a32132154@gmail.com',
            (SELECT id FROM b2e_roles WHERE name = 'admin'), FALSE, 'system', 'system'
     WHERE NOT EXISTS (SELECT 1 FROM b2e_users WHERE username = 'testb2e');
 
     UPDATE b2e_users
     SET role_id = (SELECT id FROM b2e_roles WHERE name = 'admin'),
-        must_change_password = FALSE
+        must_change_password = FALSE,
+        email = 'a32132154@gmail.com'
     WHERE username = 'testb2e';
 """);
 Console.WriteLine("  ✔ b2e_users（testb2e / testb2e，角色：admin）");

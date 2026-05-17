@@ -49,11 +49,12 @@
 <el-dialog v-model="dialogVisible" :title="isEdit ? t('admin.editTitle') : t('admin.newTitle')"
            width="480px" :close-on-click-modal="false">
   <el-form label-width="100px">
-    <el-form-item :label="t('admin.username')">
-      <el-input v-model="form.username" :disabled="isEdit" />
+    <el-form-item :label="t('admin.username')" required>
+      <el-input v-model="form.username" :disabled="isEdit" :placeholder="t('admin.usernameReq')" />
     </el-form-item>
-    <el-form-item :label="t('admin.email')">
-      <el-input v-model="form.email" />
+    <el-form-item label="Email" required>
+      <el-input v-model="form.email" type="email" placeholder="example@company.com" />
+      <div v-if="formErrors.email" style="color:#f56c6c;font-size:12px;margin-top:4px">{{ formErrors.email }}</div>
     </el-form-item>
     <el-form-item :label="t('admin.role')">
       <el-select v-model="form.roleId" clearable style="width:100%">
@@ -85,7 +86,8 @@ createApp({
     const dialogVisible = ref(false);
     const isEdit   = ref(false);
     const editId   = ref(null);
-    const form     = reactive({ username: '', email: '', roleId: null });
+    const form       = reactive({ username: '', email: '', roleId: null });
+    const formErrors = reactive({ email: '' });
 
     async function loadData() {
       loading.value = true;
@@ -100,17 +102,24 @@ createApp({
     function openCreate() {
       isEdit.value = false; editId.value = null;
       Object.assign(form, { username: '', email: '', roleId: null });
+      Object.assign(formErrors, { email: '' });
       dialogVisible.value = true;
     }
 
     function openEdit(row) {
       isEdit.value = true; editId.value = row.id;
       Object.assign(form, { username: row.username, email: row.email || '', roleId: row.roleId || null });
+      Object.assign(formErrors, { email: '' });
       dialogVisible.value = true;
     }
 
     async function submitForm() {
+      Object.assign(formErrors, { email: '' });
       if (!form.username.trim()) { common.showToast(common.t('admin.usernameReq')); return; }
+      if (!isEdit.value) {
+        if (!form.email.trim()) { formErrors.email = 'Email 為必填'; return; }
+        if (!/^[^@@\s]+@@[^@@\s]+\.[^@@\s]+$/.test(form.email)) { formErrors.email = 'Email 格式不正確'; return; }
+      }
       saving.value = true;
       try {
         const res = isEdit.value
@@ -132,7 +141,7 @@ createApp({
 
     onMounted(async () => { await common.checkAuth(); await loadData(); });
 
-    return { ...common, loading, saving, admins, roles, dialogVisible, isEdit, form,
+    return { ...common, loading, saving, admins, roles, dialogVisible, isEdit, form, formErrors,
              openCreate, openEdit, submitForm, doDelete, formatDate };
   }
 }).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
