@@ -1,0 +1,146 @@
+@page "/b2e/admin/users"
+@model UsersAdminModel
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "前台會員管理"; ViewData["TitleKey"] = "user.title"; }
+
+<div class="b2e-page-header">
+  <div>
+    <div class="b2e-page-title">{{ t('user.title') }}</div>
+    <div class="b2e-page-subtitle">{{ t('common.total') }} {{ users.length }} {{ t('common.records') }}</div>
+  </div>
+  <button class="btn-primary" @@click="openCreate">＋ {{ t('common.add') }}</button>
+</div>
+
+<!-- Table -->
+<div class="b2e-card">
+  <div class="b2e-toolbar">
+    <div class="b2e-toolbar-left">
+      <el-input v-model="searchText" :placeholder="t('common.search')" clearable style="width:260px">
+        <template #prefix><span>🔍</span></template>
+      </el-input>
+    </div>
+    <div class="b2e-toolbar-right">
+      <button class="btn-outline" @@click="loadData">{{ t('common.refresh') }}</button>
+    </div>
+  </div>
+
+  <el-table :data="filteredUsers" v-loading="loading" stripe style="width:100%">
+    <el-table-column :label="t('user.username')" min-width="140">
+      <template #default="{ row }">{{ row.username }}</template>
+    </el-table-column>
+    <el-table-column :label="t('user.email')" min-width="200">
+      <template #default="{ row }">{{ row.email }}</template>
+    </el-table-column>
+    <el-table-column :label="t('common.actions')" width="200" fixed="right">
+      <template #default="{ row }">
+        <button class="btn-outline" style="margin-right:8px" @@click="openEdit(row)">✏️ {{ t('common.edit') }}</button>
+        <el-popconfirm :title="t('user.deleteConfirm')" @@confirm="doDelete(row.id)">
+          <template #reference>
+            <button class="btn-danger">🗑 {{ t('common.delete') }}</button>
+          </template>
+        </el-popconfirm>
+      </template>
+    </el-table-column>
+  </el-table>
+</div>
+
+<!-- Add/Edit Dialog -->
+<el-dialog v-model="dialogVisible" :title="isEdit ? t('user.editTitle') : t('user.newTitle')"
+           width="480px" :close-on-click-modal="false">
+  <el-form label-width="80px">
+    <el-form-item :label="t('user.username')">
+      <el-input v-model="form.username" :disabled="isEdit" />
+    </el-form-item>
+    <el-form-item :label="t('user.email')">
+      <el-input v-model="form.email" />
+    </el-form-item>
+    <el-form-item :label="t('user.password')">
+      <el-input v-model="form.password" type="password" show-password
+                :placeholder="isEdit ? t('user.passwordHint') : ''" />
+    </el-form-item>
+  </el-form>
+  <template #footer>
+    <button class="btn-outline" @@click="dialogVisible=false">{{ t('common.cancel') }}</button>
+    <button class="btn-primary" style="margin-left:8px" @@click="submitForm" :disabled="saving">
+      {{ saving ? t('common.loading') : t('common.save') }}
+    </button>
+  </template>
+</el-dialog>
+
+@section Scripts {
+<script>
+const { createApp, ref, reactive, computed, onMounted } = Vue;
+createApp({
+  setup() {
+    const common        = useB2eCommon();
+    const loading       = ref(false);
+    const saving        = ref(false);
+    const users         = ref([]);
+    const searchText    = ref('');
+    const dialogVisible = ref(false);
+    const isEdit        = ref(false);
+    const editId        = ref(null);
+    const form          = reactive({ username: '', email: '', password: '' });
+
+    const filteredUsers = computed(() => {
+      if (!searchText.value.trim()) return users.value;
+      const q = searchText.value.toLowerCase();
+      return users.value.filter(u =>
+        u.username?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
+    });
+
+    async function loadData() {
+      loading.value = true;
+      try {
+        const r = await b2eApi.getUsers();
+        users.value = r.data ?? [];
+      } catch { common.showToast(common.t('common.error')); }
+      finally { loading.value = false; }
+    }
+
+    function openCreate() {
+      isEdit.value = false; editId.value = null;
+      Object.assign(form, { username: '', email: '', password: '' });
+      dialogVisible.value = true;
+    }
+
+    function openEdit(row) {
+      isEdit.value = true; editId.value = row.id;
+      Object.assign(form, { username: row.username, email: row.email || '', password: '' });
+      dialogVisible.value = true;
+    }
+
+    async function submitForm() {
+      if (!isEdit.value && !form.username) { common.showToast(common.t('user.usernameReq')); return; }
+      saving.value = true;
+      try {
+        const res = isEdit.value
+          ? await b2eApi.updateUser(editId.value, { email: form.email, newPassword: form.password || null })
+          : await b2eApi.createUser({ username: form.username, email: form.email, password: form.password });
+        if (res.success) {
+          common.showToast(common.t('common.success'));
+          dialogVisible.value = false;
+          await loadData();
+        } else { common.showError(res.message || common.t('common.error')); }
+      } catch { common.showError(common.t('common.error')); }
+      finally { saving.value = false; }
+    }
+
+    async function doDelete(id) {
+      try {
+        await b2eApi.deleteUser(id);
+        common.showToast(common.t('common.success'));
+        await loadData();
+      } catch { common.showError(common.t('common.error')); }
+    }
+
+    onMounted(async () => {
+      await common.requirePermission('members');
+      await loadData();
+    });
+
+    return { ...common, loading, saving, users, searchText, filteredUsers,
+             dialogVisible, isEdit, form, openCreate, openEdit, submitForm, doDelete, formatDate };
+  }
+}).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
+</script>
+}

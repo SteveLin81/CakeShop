@@ -1,44 +1,52 @@
-using CakeShop.Core.Interfaces;
-using CakeShop.Core.Models;
+﻿using CakeShop.Core.Interfaces;
+using EC.Entities.Models;
+using CakeShop.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CakeShop.Infrastructure.Repositories;
 
 public class CartRepository : ICartRepository
 {
-    private readonly List<CartItem> _items = new();
-    private int _nextId = 1;
+    private readonly CakeShopDbContext _ctx;
 
-    public Task<IEnumerable<CartItem>> GetBySessionAsync(string sessionId)
-        => Task.FromResult(_items.Where(i => i.SessionId == sessionId));
+    public CartRepository(CakeShopDbContext ctx) => _ctx = ctx;
 
-    public Task<CartItem?> GetItemAsync(string sessionId, int productId)
-        => Task.FromResult(_items.FirstOrDefault(i =>
-            i.SessionId == sessionId && i.ProductId == productId));
+    public async Task<IEnumerable<CartItem>> GetBySessionAsync(string sessionId)
+        => await _ctx.CartItems
+               .Include(i => i.Product)
+               .Where(i => i.SessionId == sessionId)
+               .ToListAsync();
 
-    public Task AddItemAsync(CartItem item)
+    public async Task<CartItem?> GetItemAsync(string sessionId, int productId)
+        => await _ctx.CartItems
+               .FirstOrDefaultAsync(i => i.SessionId == sessionId && i.ProductId == productId);
+
+    public async Task AddItemAsync(CartItem item)
     {
-        item.Id = _nextId++;
-        _items.Add(item);
-        return Task.CompletedTask;
+        _ctx.CartItems.Add(item);
+        await _ctx.SaveChangesAsync();
     }
 
-    public Task UpdateItemAsync(CartItem item)
+    public async Task UpdateItemAsync(CartItem item)
     {
-        var existing = _items.FirstOrDefault(i => i.Id == item.Id);
-        if (existing is not null)
-            existing.Quantity = item.Quantity;
-        return Task.CompletedTask;
+        _ctx.CartItems.Update(item);
+        await _ctx.SaveChangesAsync();
     }
 
-    public Task RemoveItemAsync(int itemId)
+    public async Task RemoveItemAsync(int itemId)
     {
-        _items.RemoveAll(i => i.Id == itemId);
-        return Task.CompletedTask;
+        var item = await _ctx.CartItems.FindAsync(itemId);
+        if (item is not null)
+        {
+            _ctx.CartItems.Remove(item);
+            await _ctx.SaveChangesAsync();
+        }
     }
 
-    public Task ClearCartAsync(string sessionId)
+    public async Task ClearCartAsync(string sessionId)
     {
-        _items.RemoveAll(i => i.SessionId == sessionId);
-        return Task.CompletedTask;
+        var items = await _ctx.CartItems.Where(i => i.SessionId == sessionId).ToListAsync();
+        _ctx.CartItems.RemoveRange(items);
+        await _ctx.SaveChangesAsync();
     }
 }

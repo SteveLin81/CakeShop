@@ -1,0 +1,277 @@
+@page "/b2e/admin/products"
+@model ProductsAdminModel
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "商品管理"; ViewData["TitleKey"] = "product.title"; }
+
+<div class="b2e-page-header">
+  <div>
+    <div class="b2e-page-title">{{ t('product.title') }}</div>
+    <div class="b2e-page-subtitle">{{ t('common.total') }} {{ products.length }} {{ t('common.records') }}</div>
+  </div>
+  <button class="btn-primary" @@click="openCreate">＋ {{ t('common.add') }}</button>
+</div>
+
+<!-- Toolbar -->
+<div class="b2e-card">
+  <div class="b2e-toolbar">
+    <div class="b2e-toolbar-left">
+      <el-input v-model="searchText" :placeholder="t('common.search')" clearable style="width:260px">
+        <template #prefix><span>🔍</span></template>
+      </el-input>
+      <el-select v-model="filterCat" :placeholder="t('product.category')" clearable style="width:160px">
+        <el-option :value="0" :label="t('common.reset')" />
+        <el-option v-for="c in categories" :key="c.id" :value="c.id" :label="c.name" />
+      </el-select>
+    </div>
+    <div class="b2e-toolbar-right">
+      <button class="btn-outline" @@click="loadData">{{ t('common.refresh') }}</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <el-table :data="filteredProducts" v-loading="loading" stripe style="width:100%">
+    <el-table-column :label="t('product.name')" min-width="160">
+      <template #default="{ row }">{{ localName(row) }}</template>
+    </el-table-column>
+    <el-table-column :label="t('product.category')" width="100">
+      <template #default="{ row }">{{ localCategoryName(row) }}</template>
+    </el-table-column>
+    <el-table-column :label="t('product.price')" width="100">
+      <template #default="{ row }">NT$ {{ row.price }}</template>
+    </el-table-column>
+    <el-table-column :label="t('product.isAvailable')" width="90">
+      <template #default="{ row }">
+        <span class="badge" :class="row.isAvailable ? 'badge-success' : 'badge-danger'">
+          {{ row.isAvailable ? t('common.available') : t('common.unavailable') }}
+        </span>
+      </template>
+    </el-table-column>
+    <el-table-column :label="t('homepage.isFeatured')" width="110">
+      <template #default="{ row }">
+        <el-switch v-model="row.isFeatured" @@change="toggleFeatured(row)" :loading="row._saving" />
+      </template>
+    </el-table-column>
+    <el-table-column :label="t('common.actions')" width="200" fixed="right">
+      <template #default="{ row }">
+        <button class="btn-outline" style="margin-right:8px" @@click="openEdit(row)">✏️ {{ t('common.edit') }}</button>
+        <el-popconfirm :title="t('product.deleteConfirm')" @@confirm="doDelete(row.id)">
+          <template #reference>
+            <button class="btn-danger">🗑 {{ t('common.delete') }}</button>
+          </template>
+        </el-popconfirm>
+      </template>
+    </el-table-column>
+  </el-table>
+</div>
+
+<!-- Add/Edit Dialog -->
+<el-dialog v-model="dialogVisible" :title="isEdit ? t('product.editTitle') : t('product.newTitle')"
+           width="760px" :close-on-click-modal="false">
+  <el-tabs v-model="activeTab">
+    <el-tab-pane :label="t('product.basicTab')" name="basic">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <el-form-item :label="t('product.price')">
+          <el-input-number v-model="form.price" :min="0" :precision="0" style="width:100%" />
+        </el-form-item>
+        <el-form-item :label="t('product.category')">
+          <el-select v-model="form.categoryId" style="width:100%">
+            <el-option v-for="c in categories" :key="c.id" :value="c.id" :label="c.name" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="t('product.imageUrl')" style="grid-column:1/-1">
+          <div style="display:flex;gap:8px;align-items:center;width:100%">
+            <el-input v-model="form.imageUrl" style="flex:1" />
+            <label style="cursor:pointer">
+              <input type="file" accept="image/*" style="display:none" @@change="handleImageUpload($event)">
+              <span class="btn-outline" style="white-space:nowrap">📤 {{ t('common.upload') }}</span>
+            </label>
+          </div>
+          <img v-if="form.imageUrl" :src="form.imageUrl" style="margin-top:8px;max-height:80px;border-radius:4px"
+               @@error="$event.target.style.display='none'">
+        </el-form-item>
+        <el-form-item :label="t('product.isAvailable')" style="grid-column:1/-1">
+          <el-switch v-model="form.isAvailable" />
+          &nbsp;&nbsp;
+          <el-switch v-model="form.isFeatured" active-text="⭐" />
+          <span style="font-size:.85rem;color:var(--b2e-muted);margin-left:4px">{{ t('homepage.isFeatured') }}</span>
+        </el-form-item>
+      </div>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.zhTwTab')" name="zhTW">
+      <el-form-item :label="t('product.name')"><el-input v-model="form.name" /></el-form-item>
+      <el-form-item :label="t('product.desc')"><el-input type="textarea" :rows="3" v-model="form.description" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.enTab')" name="en">
+      <el-form-item :label="t('product.nameEn')"><el-input v-model="form.nameEn" /></el-form-item>
+      <el-form-item :label="t('product.descEn')"><el-input type="textarea" :rows="3" v-model="form.descriptionEn" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.jaTab')" name="ja">
+      <el-form-item :label="t('product.nameJa')"><el-input v-model="form.nameJa" /></el-form-item>
+      <el-form-item :label="t('product.descJa')"><el-input type="textarea" :rows="3" v-model="form.descriptionJa" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.zhCnTab')" name="zhCN">
+      <el-form-item :label="t('product.nameZhCn')"><el-input v-model="form.nameZhCn" /></el-form-item>
+      <el-form-item :label="t('product.descZhCn')"><el-input type="textarea" :rows="3" v-model="form.descriptionZhCn" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.thTab')" name="th">
+      <el-form-item :label="t('product.nameTh')"><el-input v-model="form.nameTh" /></el-form-item>
+      <el-form-item :label="t('product.descTh')"><el-input type="textarea" :rows="3" v-model="form.descriptionTh" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.koTab')" name="ko">
+      <el-form-item :label="t('product.nameKo')"><el-input v-model="form.nameKo" /></el-form-item>
+      <el-form-item :label="t('product.descKo')"><el-input type="textarea" :rows="3" v-model="form.descriptionKo" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.viTab')" name="vi">
+      <el-form-item :label="t('product.nameVi')"><el-input v-model="form.nameVi" /></el-form-item>
+      <el-form-item :label="t('product.descVi')"><el-input type="textarea" :rows="3" v-model="form.descriptionVi" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.msTab')" name="ms">
+      <el-form-item :label="t('product.nameMs')"><el-input v-model="form.nameMs" /></el-form-item>
+      <el-form-item :label="t('product.descMs')"><el-input type="textarea" :rows="3" v-model="form.descriptionMs" /></el-form-item>
+    </el-tab-pane>
+  </el-tabs>
+  <template #footer>
+    <button class="btn-outline" @@click="dialogVisible=false">{{ t('common.cancel') }}</button>
+    <button class="btn-primary" style="margin-left:8px" @@click="submitForm" :disabled="saving">
+      {{ saving ? t('common.loading') : t('common.save') }}
+    </button>
+  </template>
+</el-dialog>
+
+@section Scripts {
+<script>
+const { createApp, ref, reactive, computed, onMounted } = Vue;
+createApp({
+  setup() {
+    const common        = useB2eCommon();
+    const { locale }    = common;
+    const loading       = ref(false);
+    const saving        = ref(false);
+    const products      = ref([]);
+    const categories    = ref([]);
+    const searchText    = ref('');
+    const filterCat     = ref(0);
+    const dialogVisible = ref(false);
+    const isEdit        = ref(false);
+    const editId        = ref(null);
+    const activeTab     = ref('basic');
+    const form          = reactive(emptyProductForm());
+
+    const filteredProducts = computed(() => {
+      let list = filterCat.value ? products.value.filter(p => p.categoryId === filterCat.value) : products.value;
+      if (searchText.value.trim()) {
+        const q = searchText.value.toLowerCase();
+        list = list.filter(p => p.name?.toLowerCase().includes(q) || p.nameEn?.toLowerCase().includes(q));
+      }
+      return list;
+    });
+
+    async function loadData() {
+      loading.value = true;
+      try {
+        const [pr, cr] = await Promise.all([b2eApi.getProducts(), b2eApi.getCategories()]);
+        products.value   = (pr.data ?? []).map(p => ({ ...p, _saving: false }));
+        categories.value = cr.data  ?? [];
+      } catch { common.showToast(common.t('common.error')); }
+      finally { loading.value = false; }
+    }
+
+    async function toggleFeatured(row) {
+      row._saving = true;
+      try {
+        const res = await b2eApi.updateProduct(row.id, {
+          name: row.name, nameEn: row.nameEn, nameJa: row.nameJa, nameZhCn: row.nameZhCn,
+          nameTh: row.nameTh||'', nameKo: row.nameKo||'', nameVi: row.nameVi||'', nameMs: row.nameMs||'',
+          description: row.description||'', descriptionEn: row.descriptionEn||'',
+          descriptionJa: row.descriptionJa||'', descriptionZhCn: row.descriptionZhCn||'',
+          descriptionTh: row.descriptionTh||'', descriptionKo: row.descriptionKo||'',
+          descriptionVi: row.descriptionVi||'', descriptionMs: row.descriptionMs||'',
+          price: row.price, imageUrl: row.imageUrl||'', categoryId: row.categoryId,
+          isAvailable: row.isAvailable, isFeatured: row.isFeatured,
+        });
+        if (!res.success) { row.isFeatured = !row.isFeatured; common.showToast(common.t('common.error')); }
+      } catch { row.isFeatured = !row.isFeatured; common.showToast(common.t('common.error')); }
+      finally { row._saving = false; }
+    }
+
+    function openCreate() {
+      isEdit.value = false; editId.value = null; activeTab.value = 'basic';
+      Object.assign(form, emptyProductForm());
+      dialogVisible.value = true;
+    }
+
+    function openEdit(row) {
+      isEdit.value = true; editId.value = row.id; activeTab.value = 'basic';
+      Object.assign(form, {
+        name: row.name, nameEn: row.nameEn, nameJa: row.nameJa, nameZhCn: row.nameZhCn,
+        nameTh: row.nameTh||'', nameKo: row.nameKo||'', nameVi: row.nameVi||'', nameMs: row.nameMs||'',
+        description: row.description, descriptionEn: row.descriptionEn, descriptionJa: row.descriptionJa,
+        descriptionZhCn: row.descriptionZhCn, descriptionTh: row.descriptionTh||'', descriptionKo: row.descriptionKo||'',
+        descriptionVi: row.descriptionVi||'', descriptionMs: row.descriptionMs||'',
+        price: row.price, imageUrl: row.imageUrl, categoryId: row.categoryId,
+        isAvailable: row.isAvailable, isFeatured: row.isFeatured || false,
+      });
+      dialogVisible.value = true;
+    }
+
+    async function handleImageUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const res = await b2eApi.uploadProductImage(file);
+        if (res.success) { form.imageUrl = res.data.url; common.showToast(common.t('common.success')); }
+        else common.showToast(res.message || common.t('common.error'));
+      } catch { common.showToast(common.t('common.error')); }
+      event.target.value = '';
+    }
+
+    async function submitForm() {
+      saving.value = true;
+      try {
+        const res = isEdit.value
+          ? await b2eApi.updateProduct(editId.value, { ...form })
+          : await b2eApi.createProduct({ ...form });
+        if (res.success) {
+          common.showToast(common.t('common.success'));
+          dialogVisible.value = false;
+          await loadData();
+        } else { common.showError(res.message || common.t('common.error')); }
+      } catch { common.showError(common.t('common.error')); }
+      finally { saving.value = false; }
+    }
+
+    function localName(row) {
+      const map = {
+        'en': row.nameEn, 'ja': row.nameJa, 'zh-CN': row.nameZhCn,
+        'th': row.nameTh, 'ko': row.nameKo, 'vi': row.nameVi, 'ms': row.nameMs
+      };
+      return map[locale.value] || row.name;
+    }
+    function localCategoryName(row) {
+      if (!row.category) return '';
+      const map = {
+        'en': row.category.nameEn, 'ja': row.category.nameJa, 'zh-CN': row.category.nameZhCn,
+        'th': row.category.nameTh, 'ko': row.category.nameKo, 'vi': row.category.nameVi, 'ms': row.category.nameMs
+      };
+      return map[locale.value] || row.category.name;
+    }
+
+    async function doDelete(id) {
+      try {
+        await b2eApi.deleteProduct(id);
+        common.showToast(common.t('common.success'));
+        await loadData();
+      } catch { common.showError(common.t('common.error')); }
+    }
+
+    onMounted(async () => {
+      await common.requirePermission('products');
+      await loadData();
+    });
+
+    return { ...common, loading, saving, products, categories, searchText, filterCat, filteredProducts,
+             dialogVisible, isEdit, activeTab, form, openCreate, openEdit, submitForm, doDelete, handleImageUpload, toggleFeatured, formatDate,
+             localName, localCategoryName };
+  }
+}).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
+</script>
+}

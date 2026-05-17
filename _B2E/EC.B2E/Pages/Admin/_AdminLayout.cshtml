@@ -1,0 +1,117 @@
+@{
+    var pagePath = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    string NavClass(string p) => pagePath.StartsWith(p) ? "b2e-nav-item active" : "b2e-nav-item";
+    var titleKey = ViewData["TitleKey"]?.ToString() ?? "dashboard.title";
+}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@ViewData["Title"]</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <link rel="stylesheet" href="/css/b2e.css">
+</head>
+<body>
+<div id="b2e-app" v-cloak>
+  <div class="b2e-wrapper">
+
+    <!-- ── Sidebar ── -->
+    <aside class="b2e-sidebar" :class="{ open: sidebarOpen }">
+      <div class="b2e-sidebar-logo">
+        <div class="logo-icon">⚙️</div>
+        <div>
+          <div class="logo-text">B2E Admin</div>
+          <div class="logo-sub">{{ t('menu.sidebarSubtitle') }}</div>
+        </div>
+      </div>
+
+      <nav class="b2e-nav">
+        <div class="b2e-nav-section">{{ t('menu.dashboard') }}</div>
+        <a href="/b2e/admin" class="@NavClass("/b2e/admin")">
+          <span class="nav-icon">📊</span> {{ t('menu.dashboard') }}
+        </a>
+
+        <div class="b2e-nav-section" style="margin-top:16px">{{ t('menu.managementSection') }}</div>
+        <a v-if="hasPermission('products')" href="/b2e/admin/products" class="@NavClass("/b2e/admin/products")">
+          <span class="nav-icon">🎂</span> {{ t('menu.products') }}
+        </a>
+        <a v-if="hasPermission('categories')" href="/b2e/admin/categories" class="@NavClass("/b2e/admin/categories")">
+          <span class="nav-icon">🏷️</span> {{ t('menu.categories') }}
+        </a>
+        <a v-if="hasPermission('announcements')" href="/b2e/admin/announcements" class="@NavClass("/b2e/admin/announcements")">
+          <span class="nav-icon">📢</span> {{ t('menu.announcements') }}
+        </a>
+        <a v-if="hasPermission('members')" href="/b2e/admin/users" class="@NavClass("/b2e/admin/users")">
+          <span class="nav-icon">👥</span> {{ t('menu.users') }}
+        </a>
+        <a v-if="hasPermission('roles')" href="/b2e/admin/roles" class="@NavClass("/b2e/admin/roles")">
+          <span class="nav-icon">🔑</span> {{ t('menu.roles') }}
+        </a>
+        <a v-if="hasPermission('admins')" href="/b2e/admin/admins" class="@NavClass("/b2e/admin/admins")">
+          <span class="nav-icon">👨‍💼</span> {{ t('menu.admins') }}
+        </a>
+      </nav>
+
+      <div class="b2e-sidebar-footer">
+        <div class="b2e-user-avatar">{{ adminUsername.charAt(0).toUpperCase() }}</div>
+        <div class="b2e-user-info">
+          <div class="b2e-user-name">{{ adminUsername }}</div>
+          <div class="b2e-user-role">{{ adminRole || t('menu.adminRole') }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <a href="/b2e/admin/change-password" :title="t('menu.changePassword')"
+             style="color:rgba(255,255,255,.6);font-size:1rem;text-decoration:none;line-height:1">🔒</a>
+          <button class="b2e-logout-btn" @@click="logout" :title="t('auth.logout')">⏻</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="b2e-main">
+      <div class="b2e-topbar">
+        <div class="b2e-topbar-left">
+          <button class="b2e-hamburger" @@click="sidebarOpen = !sidebarOpen">☰</button>
+          <span class="b2e-breadcrumb" v-text="t('@titleKey')"></span>
+        </div>
+        <div class="b2e-topbar-right">
+          <div style="position:relative">
+            <button class="b2e-lang-btn" @@click.stop="showLangMenu = !showLangMenu">
+              🌐 {{ currentLangLabel }}
+            </button>
+            <div v-if="showLangMenu" class="b2e-lang-dropdown">
+              <div v-for="lang in langs" :key="lang.code"
+                   class="b2e-lang-option" :class="{ active: locale === lang.code }"
+                   @@click.stop="setLocale(lang.code); showLangMenu=false">
+                {{ lang.label }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="b2e-content">
+        @RenderBody()
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Toast -->
+  <div class="b2e-toast" v-if="toast">{{ toast }}</div>
+
+</div><!-- /b2e-app -->
+
+<script>window.__b2eTitleKey = '@titleKey';</script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+<script src="https://unpkg.com/vue-i18n@9/dist/vue-i18n.global.prod.js"></script>
+<script src="/js/b2e-i18n.js"></script>
+<script src="/js/b2e-api.js"></script>
+<script src="/js/b2e-common.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,137 @@
+@page
+@model ContactModel
+@{ ViewData["Title"] = "Contact"; }
+
+<!-- ── Page Hero ── -->
+<div class="page-hero">
+  <h1>{{ t('contact.title') }}</h1>
+  <p>{{ t('contact.subtitle') }}</p>
+</div>
+
+<!-- ── Contact Section ── -->
+<section class="section">
+  <div class="container">
+    <div class="contact-grid">
+
+      <!-- Form -->
+      <div class="contact-form-card">
+        <h2 style="font-size:1.5rem;font-weight:700;color:var(--green-dark);margin-bottom:28px">
+          {{ t('contact.send') }}
+        </h2>
+
+        <div v-if="submitSuccess" style="background:var(--green-pale);border:1.5px solid var(--green-light);border-radius:10px;padding:16px 20px;margin-bottom:20px;color:var(--green-dark);font-weight:500">
+          ✅ {{ t('contact.success') }}
+        </div>
+
+        <template v-if="!submitSuccess">
+          <div class="form-group">
+            <label class="form-label">{{ t('contact.name') }} <span style="color:#e53935">*</span></label>
+            <input class="form-input" v-model="form.name" :placeholder="t('contact.name')">
+            <div class="form-error" v-if="errors.name">{{ errors.name }}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ t('contact.email') }} <span style="color:#e53935">*</span></label>
+            <input class="form-input" type="email" v-model="form.email" :placeholder="t('contact.email')">
+            <div class="form-error" v-if="errors.email">{{ errors.email }}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ t('contact.subject') }} <span style="color:#e53935">*</span></label>
+            <input class="form-input" v-model="form.subject" :placeholder="t('contact.subject')">
+            <div class="form-error" v-if="errors.subject">{{ errors.subject }}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ t('contact.message') }} <span style="color:#e53935">*</span></label>
+            <textarea class="form-textarea" v-model="form.message" :placeholder="t('contact.message')" rows="5"></textarea>
+            <div class="form-error" v-if="errors.message">{{ errors.message }}</div>
+          </div>
+          <button class="submit-btn" @@click="submitForm" :disabled="submitting">
+            {{ submitting ? t('common.loading') : t('contact.send') }}
+          </button>
+        </template>
+      </div>
+
+      <!-- Info -->
+      <div class="contact-info-card">
+        <h3>{{ t('contact.infoTitle') }}</h3>
+        <div class="info-item">
+          <div class="info-icon">📍</div>
+          <div>
+            <div class="info-label">{{ t('contact.address') }}</div>
+            <div class="info-value">{{ t('contact.address') }}</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">📞</div>
+          <div>
+            <div class="info-label">{{ t('contact.phone') }}</div>
+            <div class="info-value">{{ t('contact.phone') }}</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">✉️</div>
+          <div>
+            <div class="info-label">{{ t('contact.email') }}</div>
+            <div class="info-value">{{ t('contact.email2') }}</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">🕐</div>
+          <div>
+            <div class="info-label">{{ t('contact.hours') }}</div>
+            <div class="info-value">{{ t('contact.hours') }}</div>
+          </div>
+        </div>
+        <div style="margin-top:28px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.1);height:180px;display:flex;align-items:center;justify-content:center;font-size:2.5rem">
+          🗺️
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+@section Scripts {
+<script>
+const { createApp, ref, onMounted } = Vue;
+
+createApp({
+  setup() {
+    const common       = useCommonSetup();
+    const form         = ref({ name: '', email: '', subject: '', message: '' });
+    const errors       = ref({});
+    const submitting   = ref(false);
+    const submitSuccess = ref(false);
+
+    async function submitForm() {
+      errors.value = {};
+      if (!form.value.name.trim())    errors.value.name    = common.t('contact.nameReq');
+      if (!form.value.email.trim())   errors.value.email   = common.t('contact.emailReq');
+      else if (!/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(form.value.email)) errors.value.email = common.t('contact.emailInvalid');
+      if (!form.value.subject.trim()) errors.value.subject = common.t('contact.subjectReq');
+      if (!form.value.message.trim()) errors.value.message = common.t('contact.messageReq');
+      if (Object.keys(errors.value).length) return;
+      submitting.value = true;
+      try {
+        const res = await api.submitContact(form.value);
+        if (res.success) {
+          submitSuccess.value = true;
+          form.value = { name: '', email: '', subject: '', message: '' };
+        } else { common.showToast(common.t('common.error')); }
+      } catch { common.showToast(common.t('common.error')); }
+      finally { submitting.value = false; }
+    }
+
+    onMounted(async () => {
+      dismissLoader();
+      applyExitTransition();
+      await common.loadAnnouncement();
+      await common.loadCart();
+    });
+
+    return {
+      ...common, form, errors, submitting, submitSuccess, submitForm,
+    };
+  }
+}).use(i18n).use(ElementPlus).mount('#app');
+</script>
+}

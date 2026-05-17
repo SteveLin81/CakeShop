@@ -1,0 +1,171 @@
+@page "/b2e/admin/categories"
+@model CategoriesAdminModel
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "分類管理"; ViewData["TitleKey"] = "category.title"; }
+
+<div class="b2e-page-header">
+  <div>
+    <div class="b2e-page-title">{{ t('category.title') }}</div>
+    <div class="b2e-page-subtitle">{{ t('common.total') }} {{ categories.length }} {{ t('common.records') }}</div>
+  </div>
+  <button class="btn-primary" @@click="openCreate">＋ {{ t('common.add') }}</button>
+</div>
+
+<div class="b2e-card">
+  <div class="b2e-toolbar">
+    <div class="b2e-toolbar-left">
+      <el-input v-model="searchText" :placeholder="t('common.search')" clearable style="width:260px">
+        <template #prefix><span>🔍</span></template>
+      </el-input>
+    </div>
+    <div class="b2e-toolbar-right">
+      <button class="btn-outline" @@click="loadData">{{ t('common.refresh') }}</button>
+    </div>
+  </div>
+
+  <el-table :data="filteredCategories" v-loading="loading" stripe style="width:100%">
+    <el-table-column :label="t('category.name')" min-width="200">
+      <template #default="{ row }">
+        <span>{{ localeName(row) }}</span>
+      </template>
+    </el-table-column>
+    <el-table-column :label="t('common.actions')" width="200" fixed="right">
+      <template #default="{ row }">
+        <button class="btn-outline" style="margin-right:8px" @@click="openEdit(row)">✏️ {{ t('common.edit') }}</button>
+        <el-popconfirm :title="t('category.deleteConfirm')" @@confirm="doDelete(row.id)">
+          <template #reference>
+            <button class="btn-danger">🗑 {{ t('common.delete') }}</button>
+          </template>
+        </el-popconfirm>
+      </template>
+    </el-table-column>
+  </el-table>
+</div>
+
+<!-- Add/Edit Dialog -->
+<el-dialog v-model="dialogVisible" :title="isEdit ? t('category.editTitle') : t('category.newTitle')"
+           width="680px" :close-on-click-modal="false">
+  <el-tabs v-model="activeTab">
+    <el-tab-pane :label="t('product.zhTwTab')" name="zhTW">
+      <el-form-item :label="t('category.name')">
+        <el-input v-model="form.name" :placeholder="t('category.nameReq')" />
+      </el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.enTab')" name="en">
+      <el-form-item :label="t('product.nameEn')"><el-input v-model="form.nameEn" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.jaTab')" name="ja">
+      <el-form-item :label="t('product.nameJa')"><el-input v-model="form.nameJa" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.zhCnTab')" name="zhCN">
+      <el-form-item :label="t('product.nameZhCn')"><el-input v-model="form.nameZhCn" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.thTab')" name="th">
+      <el-form-item :label="t('product.nameTh')"><el-input v-model="form.nameTh" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.koTab')" name="ko">
+      <el-form-item :label="t('product.nameKo')"><el-input v-model="form.nameKo" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.viTab')" name="vi">
+      <el-form-item :label="t('product.nameVi')"><el-input v-model="form.nameVi" /></el-form-item>
+    </el-tab-pane>
+    <el-tab-pane :label="t('product.msTab')" name="ms">
+      <el-form-item :label="t('product.nameMs')"><el-input v-model="form.nameMs" /></el-form-item>
+    </el-tab-pane>
+  </el-tabs>
+  <template #footer>
+    <button class="btn-outline" @@click="dialogVisible=false">{{ t('common.cancel') }}</button>
+    <button class="btn-primary" style="margin-left:8px" @@click="submitForm" :disabled="saving">
+      {{ saving ? t('common.loading') : t('common.save') }}
+    </button>
+  </template>
+</el-dialog>
+
+@section Scripts {
+<script>
+const { createApp, ref, reactive, computed, onMounted } = Vue;
+createApp({
+  setup() {
+    const common      = useB2eCommon();
+    const loading     = ref(false);
+    const saving      = ref(false);
+    const categories  = ref([]);
+    const searchText  = ref('');
+    const dialogVisible = ref(false);
+    const isEdit      = ref(false);
+    const editId      = ref(null);
+    const activeTab   = ref('zhTW');
+    const form        = reactive({ name:'', nameEn:'', nameJa:'', nameZhCn:'', nameTh:'', nameKo:'', nameVi:'', nameMs:'' });
+
+    const localeFieldMap = {
+      'zh-TW': 'name', 'zh-CN': 'nameZhCn', 'en': 'nameEn',
+      'ja': 'nameJa', 'th': 'nameTh', 'ko': 'nameKo', 'vi': 'nameVi', 'ms': 'nameMs',
+    };
+    function localeName(row) {
+      const field = localeFieldMap[common.locale.value] || 'name';
+      return row[field] || row.name;
+    }
+
+    const filteredCategories = computed(() => {
+      if (!searchText.value.trim()) return categories.value;
+      const q = searchText.value.toLowerCase();
+      const field = localeFieldMap[common.locale.value] || 'name';
+      return categories.value.filter(c =>
+        (c[field] || c.name || '').toLowerCase().includes(q) ||
+        c.name?.toLowerCase().includes(q) || c.nameEn?.toLowerCase().includes(q));
+    });
+
+    async function loadData() {
+      loading.value = true;
+      try {
+        const r = await b2eApi.getAllCategories();
+        categories.value = r.data ?? [];
+      } catch { common.showToast(common.t('common.error')); }
+      finally { loading.value = false; }
+    }
+
+    function openCreate() {
+      isEdit.value = false; editId.value = null; activeTab.value = 'zhTW';
+      Object.assign(form, { name:'', nameEn:'', nameJa:'', nameZhCn:'', nameTh:'', nameKo:'', nameVi:'', nameMs:'' });
+      dialogVisible.value = true;
+    }
+
+    function openEdit(row) {
+      isEdit.value = true; editId.value = row.id; activeTab.value = 'zhTW';
+      Object.assign(form, { name: row.name, nameEn: row.nameEn, nameJa: row.nameJa,
+        nameZhCn: row.nameZhCn, nameTh: row.nameTh||'', nameKo: row.nameKo||'',
+        nameVi: row.nameVi||'', nameMs: row.nameMs||'' });
+      dialogVisible.value = true;
+    }
+
+    async function submitForm() {
+      if (!form.name.trim()) { common.showToast(common.t('category.nameReq')); return; }
+      saving.value = true;
+      try {
+        const res = isEdit.value
+          ? await b2eApi.updateCategory(editId.value, { ...form })
+          : await b2eApi.createCategory({ ...form });
+        if (res.success) {
+          common.showToast(common.t('common.success'));
+          dialogVisible.value = false;
+          await loadData();
+        } else { common.showError(res.message || common.t('common.error')); }
+      } catch { common.showError(common.t('common.error')); }
+      finally { saving.value = false; }
+    }
+
+    async function doDelete(id) {
+      try {
+        const res = await b2eApi.deleteCategory(id);
+        if (res.success) { common.showToast(common.t('common.success')); await loadData(); }
+        else common.showError(res.message || common.t('common.error'));
+      } catch { common.showError(common.t('common.error')); }
+    }
+
+    onMounted(async () => { await common.requirePermission('categories'); await loadData(); });
+
+    return { ...common, loading, saving, categories, searchText, filteredCategories,
+             dialogVisible, isEdit, activeTab, form, localeName, openCreate, openEdit, submitForm, doDelete };
+  }
+}).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
+</script>
+}

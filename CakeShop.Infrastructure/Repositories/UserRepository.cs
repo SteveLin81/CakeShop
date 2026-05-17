@@ -1,30 +1,56 @@
 using CakeShop.Core.Interfaces;
-using CakeShop.Core.Models;
+using EC.Entities.Models;
+using CakeShop.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CakeShop.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository
 {
-    private readonly List<User> _users;
+    private readonly CakeShopDbContext _ctx;
 
-    public UserRepository(IEncryptionService encryptionService)
+    public UserRepository(CakeShopDbContext ctx) => _ctx = ctx;
+
+    public async Task<User?> GetByUsernameAsync(string username)
+        => await _ctx.Users.AsNoTracking()
+               .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
+
+    public async Task<User?> GetByIdAsync(int id)
+        => await _ctx.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+
+    public async Task<User?> GetByEmailAsync(string email)
+        => await _ctx.Users.AsNoTracking()
+               .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+    public async Task<User?> GetByResetTokenAsync(string token)
+        => await _ctx.Users.AsNoTracking()
+               .FirstOrDefaultAsync(u => u.ResetToken == token && u.ResetTokenExpires > DateTime.UtcNow);
+
+    public async Task<IEnumerable<User>> GetAllAsync()
+        => await _ctx.Users.AsNoTracking()
+               .OrderByDescending(u => u.CreatedAt).ToListAsync();
+
+    public async Task<User> CreateAsync(User user)
     {
-        _users = new List<User>
-        {
-            new()
-            {
-                Id = 1,
-                Username = "test",
-                PasswordHash = encryptionService.HashPassword("test"),
-                Email = "test@cakeshop.com"
-            }
-        };
+        _ctx.Users.Add(user);
+        await _ctx.SaveChangesAsync();
+        return user;
     }
 
-    public Task<User?> GetByUsernameAsync(string username)
-        => Task.FromResult(_users.FirstOrDefault(u =>
-            string.Equals(u.Username, username, StringComparison.OrdinalIgnoreCase)));
+    public async Task<User> UpdateAsync(User user)
+    {
+        _ctx.Users.Update(user);
+        await _ctx.SaveChangesAsync();
+        return user;
+    }
 
-    public Task<User?> GetByIdAsync(int id)
-        => Task.FromResult(_users.FirstOrDefault(u => u.Id == id));
+    public async Task DeleteAsync(int id)
+    {
+        var user = await _ctx.Users.FindAsync(id);
+        if (user is not null)
+        {
+            _ctx.Users.Remove(user);
+            await _ctx.SaveChangesAsync();
+        }
+    }
 }

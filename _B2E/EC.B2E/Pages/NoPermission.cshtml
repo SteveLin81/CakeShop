@@ -1,0 +1,32 @@
+@page "/b2e/no-permission"
+@model NoPermissionModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>權限不足 – B2E Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/b2e.css">
+  <style>
+    body { background:#f0f2f5; display:flex; align-items:center; justify-content:center; min-height:100vh; font-family:'Noto Sans TC',sans-serif; }
+    .np-card { background:white; border-radius:16px; padding:48px 40px; max-width:440px; width:100%; box-shadow:0 4px 24px rgba(0,0,0,.1); text-align:center; }
+    .np-icon { font-size:4rem; margin-bottom:16px; }
+    .np-title { font-size:1.4rem; font-weight:700; color:#2c3e50; margin-bottom:8px; }
+    .np-desc { color:#7f8c8d; font-size:.95rem; margin-bottom:28px; line-height:1.6; }
+    .np-btn { display:inline-block; padding:10px 28px; background:#3498db; color:white; border-radius:8px; text-decoration:none; font-weight:600; font-size:.95rem; }
+    .np-btn:hover { background:#2980b9; }
+    .np-link { display:block; margin-top:14px; color:#3498db; font-size:.88rem; text-decoration:none; cursor:pointer; }
+  </style>
+</head>
+<body>
+<div class="np-card">
+  <div class="np-icon">🔒</div>
+  <div class="np-title">您沒有存取此功能的權限</div>
+  <div class="np-desc">您的帳號角色沒有存取此頁面的授權。<br>如有疑問，請聯繫系統管理員。</div>
+  <a href="/b2e/admin" class="np-btn">返回儀表板</a>
+  <a class="np-link" onclick="history.back()">← 返回上一頁</a>
+</div>
+</body>
+</html>

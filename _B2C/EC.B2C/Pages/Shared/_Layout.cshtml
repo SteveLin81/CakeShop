@@ -1,0 +1,227 @@
+@{
+    var pageName = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@ViewData["Title"] – Sweet Bakes</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎂</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div id="loading-screen" aria-hidden="true">
+  <div class="ls-icon">🎂</div>
+  <div class="ls-name">Sweet Bakes</div>
+  <div class="ls-bar"><div class="ls-bar-fill"></div></div>
+</div>
+
+<div id="app" v-cloak>
+
+  <!-- ── Announcement Bar ── -->
+  <transition name="announce">
+    <div class="announcement-bar" v-show="announcementVisible">
+      <span class="announce-text">{{ announcementContent }}</span>
+      <button class="announce-close" @@click="dismissAnnouncement" :title="t('home.announceDismiss')">✕</button>
+    </div>
+  </transition>
+
+  <!-- ── Navbar ── -->
+  <header class="navbar" :class="{ scrolled: isScrolled }"
+          :style="{ top: announcementVisible ? '44px' : '0px' }">
+    <div class="navbar-inner">
+      <a class="logo" href="/">
+        <div class="logo-icon">🎂</div>
+        <span class="logo-text">{{ t('nav.brand') }}</span>
+      </a>
+      <nav class="nav-links">
+        <a class="nav-link @(pageName == "/Index"    ? "active" : "")" href="/">{{ t('nav.home') }}</a>
+        <a class="nav-link @(pageName == "/Products" ? "active" : "")" href="/Products">{{ t('nav.products') }}</a>
+        <a class="nav-link @(pageName == "/Contact"  ? "active" : "")" href="/Contact">{{ t('nav.contact') }}</a>
+      </nav>
+      <div class="nav-right">
+        <div class="lang-btn" @@click="showLangMenu = !showLangMenu" style="position:relative">
+          🌐 <span class="lang-label">{{ currentLangLabel }}</span>
+          <div v-if="showLangMenu" style="position:absolute;top:calc(100% + 8px);right:0;background:white;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);overflow:hidden;min-width:140px;z-index:100">
+            <div v-for="lang in langs" :key="lang.code"
+                 @@click.stop="setLocale(lang.code); showLangMenu=false"
+                 style="padding:10px 16px;cursor:pointer;font-size:.9rem;transition:background .2s"
+                 :style="{ background: locale===lang.code ? 'var(--green-pale)' : 'white', color: locale===lang.code ? 'var(--green-dark)' : 'inherit' }"
+                 @@mouseenter="$event.target.style.background='var(--green-bg)'"
+                 @@mouseleave="$event.target.style.background=locale===lang.code?'var(--green-pale)':'white'">
+              {{ lang.label }}
+            </div>
+          </div>
+        </div>
+        <button class="cart-btn" @@click="openCart()">
+          🛒 {{ t('nav.cart') }}
+          <span class="cart-badge" v-if="cartCount > 0">{{ cartCount }}</span>
+        </button>
+        <template v-if="!isLoggedIn">
+          <button class="login-btn" style="background:#e8f5e9;color:#27ae60;border:1.5px solid #27ae60" @@click="registerOpen = true">{{ t('auth.register') }}</button>
+          <button class="login-btn" @@click="loginOpen = true">{{ t('nav.login') }}</button>
+        </template>
+        <span v-else style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:.9rem;color:var(--green-dark);font-weight:600">👤 {{ username }}</span>
+          <button class="login-btn" style="background:#e0e0e0;color:#333" @@click="logout">{{ t('nav.logout') }}</button>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Page Content ── -->
+  <div class="page-content" :style="{ paddingTop: announcementVisible ? '112px' : '68px' }">
+
+    @RenderBody()
+
+    <!-- ── Footer ── -->
+    <footer class="footer">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div class="logo-icon">🎂</div>
+            <span style="color:white;font-weight:700;font-size:1.1rem">Sweet Bakes</span>
+          </div>
+          <p>{{ t('common.footerDesc') }}</p>
+        </div>
+        <div>
+          <h4>{{ t('nav.products') }}</h4>
+          <ul><li><a href="/Products">{{ t('products.all') }}</a></li></ul>
+        </div>
+        <div>
+          <h4>{{ t('nav.contact') }}</h4>
+          <ul>
+            <li><a href="/Contact">{{ t('contact.email2') }}</a></li>
+            <li><a href="/Contact">{{ t('contact.phone') }}</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">{{ t('common.footerCopyright') }}</div>
+    </footer>
+
+  </div><!-- /page-content -->
+
+  <!-- ── Cart Drawer ── -->
+  <div class="cart-overlay" v-if="cartOpen" @@click.self="cartOpen=false">
+    <div class="cart-drawer">
+      <div class="cart-header">
+        <h3>🛒 {{ t('cart.title') }}</h3>
+        <button class="cart-close" @@click="cartOpen=false">✕</button>
+      </div>
+      <div class="cart-items">
+        <div v-if="cartItems.length === 0" class="cart-empty">🛒 {{ t('cart.empty') }}</div>
+        <div class="cart-item" v-for="item in cartItems" :key="item.id">
+          <img class="cart-item-img" :src="item.imageUrl" :alt="getCartItemName(item)"
+               @@error="$event.target.src='https://placehold.co/80x60/e8f5e9/2e7d32?text=🎂'">
+          <div class="cart-item-body">
+            <div class="cart-item-name">{{ getCartItemName(item) }}</div>
+            <div class="cart-item-price">NT$ {{ item.unitPrice }}</div>
+            <div class="cart-item-controls">
+              <button class="qty-btn" @@click="updateQty(item, item.quantity-1)">−</button>
+              <span class="qty-display">{{ item.quantity }}</span>
+              <button class="qty-btn" @@click="updateQty(item, item.quantity+1)">+</button>
+              <button class="item-remove" @@click="removeItem(item)">{{ t('cart.remove') }}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cart-footer" v-if="cartItems.length > 0">
+        <div class="cart-total">
+          <span>{{ t('cart.total') }}</span><span>NT$ {{ cartTotal }}</span>
+        </div>
+        <button class="checkout-btn">{{ t('cart.checkout') }}</button>
+        <button @@click="clearCart" style="width:100%;margin-top:10px;padding:10px;background:none;border:1.5px solid #ccc;border-radius:8px;cursor:pointer;color:var(--text-muted);font-size:.9rem">
+          {{ t('cart.clear') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Login Modal ── -->
+  <div class="modal-overlay" v-if="loginOpen" @@click.self="loginOpen=false">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>{{ t('auth.loginTitle') }}</h3>
+        <button class="modal-close" @@click="loginOpen=false">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">{{ t('auth.username') }}</label>
+          <input class="form-input" v-model="loginForm.username" :placeholder="t('auth.username')" @@keyup.enter="doLogin">
+          <div class="form-error" v-if="loginErrors.username">{{ loginErrors.username }}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ t('auth.password') }}</label>
+          <input class="form-input" type="password" v-model="loginForm.password" :placeholder="t('auth.password')" @@keyup.enter="doLogin">
+          <div class="form-error" v-if="loginErrors.password">{{ loginErrors.password }}</div>
+        </div>
+        <div class="form-error" style="margin-bottom:12px" v-if="loginErrors.global">{{ loginErrors.global }}</div>
+        <button class="submit-btn" @@click="doLogin" :disabled="loginLoading">
+          {{ loginLoading ? t('common.loading') : t('auth.login') }}
+        </button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:.85rem">
+          <a href="/forgot-password" style="color:var(--green-dark);text-decoration:none">{{ t('auth.forgotPassword') }}</a>
+          <a href="#" style="color:var(--green-dark);text-decoration:none" @@click.prevent="loginOpen=false;registerOpen=true">{{ t('auth.register') }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Register Modal ── -->
+  <div class="modal-overlay" v-if="registerOpen" @@click.self="registerOpen=false">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>{{ t('auth.registerTitle') }}</h3>
+        <button class="modal-close" @@click="registerOpen=false">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">{{ t('auth.username') }}</label>
+          <input class="form-input" v-model="registerForm.username" :placeholder="t('auth.username')" @@keyup.enter="doRegister">
+          <div class="form-error" v-if="registerErrors.username">{{ registerErrors.username }}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ t('auth.email') }}</label>
+          <input class="form-input" type="email" v-model="registerForm.email" :placeholder="t('auth.email')" @@keyup.enter="doRegister">
+          <div class="form-error" v-if="registerErrors.email">{{ registerErrors.email }}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ t('auth.password') }}</label>
+          <input class="form-input" type="password" v-model="registerForm.password" :placeholder="t('auth.password')" @@keyup.enter="doRegister">
+          <div class="form-error" v-if="registerErrors.password">{{ registerErrors.password }}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">{{ t('auth.confirmPassword') }}</label>
+          <input class="form-input" type="password" v-model="registerForm.confirmPassword" :placeholder="t('auth.confirmPassword')" @@keyup.enter="doRegister">
+          <div class="form-error" v-if="registerErrors.confirmPassword">{{ registerErrors.confirmPassword }}</div>
+        </div>
+        <div class="form-error" style="margin-bottom:12px" v-if="registerErrors.global">{{ registerErrors.global }}</div>
+        <button class="submit-btn" @@click="doRegister" :disabled="registerLoading">
+          {{ registerLoading ? t('common.loading') : t('auth.register') }}
+        </button>
+        <div style="text-align:center;margin-top:14px;font-size:.85rem">
+          <a href="#" style="color:var(--green-dark);text-decoration:none" @@click.prevent="registerOpen=false;loginOpen=true">{{ t('nav.login') }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast ── -->
+  <div class="toast" v-if="toast" style="pointer-events:none">{{ toast }}</div>
+
+</div><!-- /app -->
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+<script src="https://unpkg.com/vue-i18n@9/dist/vue-i18n.global.prod.js"></script>
+<script src="/js/i18n.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
