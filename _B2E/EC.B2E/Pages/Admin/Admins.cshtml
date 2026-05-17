@@ -11,11 +11,11 @@
 </div>
 
 <div class="b2e-card">
-  <el-table :data="admins" v-loading="loading" stripe style="width:100%">
+  <el-table :data="admins" v-loading="loading" stripe style="width:100%" :key="locale">
     <el-table-column :label="t('admin.username')" width="140">
       <template #default="{ row }">{{ row.username }}</template>
     </el-table-column>
-    <el-table-column label="使用者名稱" width="140">
+    <el-table-column :label="t('admin.displayName')" width="140">
       <template #default="{ row }">{{ row.displayName }}</template>
     </el-table-column>
     <el-table-column :label="t('admin.email')" min-width="180">

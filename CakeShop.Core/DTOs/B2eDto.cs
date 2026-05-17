@@ -145,6 +145,7 @@ public class B2cUserDto
 {
     public int      Id          { get; set; }
     public string   Username    { get; set; } = string.Empty;
+    public string   DisplayName { get; set; } = string.Empty;
     public string   Email       { get; set; } = string.Empty;
     public DateTime CreatedAt   { get; set; }
     public DateTime UpdatedAt   { get; set; }
@@ -158,6 +159,9 @@ public class B2cUserCreateRequest
     [RegularExpression(@"^[a-zA-Z0-9_\-]+$", ErrorMessage = "帳號只允許英數字、底線、連字號")]
     public string Username { get; set; } = string.Empty;
 
+    [MaxLength(100)]
+    public string DisplayName { get; set; } = string.Empty;
+
     [Required(ErrorMessage = "密碼為必填")]
     [MinLength(6, ErrorMessage = "密碼至少 6 個字元")]
     [MaxLength(100, ErrorMessage = "密碼不得超過 100 個字元")]
@@ -170,6 +174,9 @@ public class B2cUserCreateRequest
 
 public class B2cUserUpdateRequest
 {
+    [MaxLength(100)]
+    public string DisplayName { get; set; } = string.Empty;
+
     [RegularExpression(@"^$|^[^@\s]+@[^@\s]+\.[^@\s]+$", ErrorMessage = "Email 格式不正確")]
     [MaxLength(100, ErrorMessage = "Email 不得超過 100 個字元")]
     public string  Email       { get; set; } = string.Empty;

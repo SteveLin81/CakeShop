@@ -317,6 +317,7 @@ await Execute(db, """
         ADD COLUMN IF NOT EXISTS updated_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
         ADD COLUMN IF NOT EXISTS update_count INTEGER      NOT NULL DEFAULT 0;
     ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS display_name VARCHAR(100) NOT NULL DEFAULT '',
         ADD COLUMN IF NOT EXISTS created_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
         ADD COLUMN IF NOT EXISTS updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
         ADD COLUMN IF NOT EXISTS updated_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
@@ -330,7 +331,11 @@ await Execute(db, """
         ADD COLUMN IF NOT EXISTS updated_by   VARCHAR(100) NOT NULL DEFAULT 'admin',
         ADD COLUMN IF NOT EXISTS update_count INTEGER      NOT NULL DEFAULT 0;
 """);
-Console.WriteLine("✔ 稽核欄位就緒（created_by / updated_at / updated_by / update_count）\n正在插入種子資料...");
+Console.WriteLine("✔ 稽核欄位就緒（created_by / updated_at / updated_by / update_count）");
+
+// 回填現有用戶的 display_name（空白時預設為帳號名）
+await Execute(db, "UPDATE users SET display_name = username WHERE display_name = '';");
+Console.WriteLine("✔ users display_name 欄位就緒\n正在插入種子資料...");
 
 // ── Step 3：種子資料 ────────────────────────────────────────────────
 await Execute(db, """
@@ -483,11 +488,39 @@ Console.WriteLine("  ✔ users（test / test）");
 var b2eHash = ComputeHash("testb2e");
 // 先插入預設角色
 await Execute(db, $"""
-    INSERT INTO b2e_roles (name, description, permissions, created_by, updated_by) VALUES
-        ('admin',   '系統管理員，擁有全部權限',                '["dashboard","products","categories","announcements","members","homepage","roles","admins"]', 'system', 'system'),
-        ('商品部門', '商品管理員，管理商品、分類與首頁設定',    '["dashboard","products","categories","homepage"]',                                          'system', 'system'),
-        ('客服部門', '客服人員，管理前台會員與公告',            '["dashboard","announcements","members"]',                                                    'system', 'system')
-    ON CONFLICT (name) DO NOTHING;
+    INSERT INTO b2e_roles (name, description, permissions,
+        name_en, name_ja, name_zh_cn, name_th, name_ko, name_vi, name_ms,
+        description_en, description_ja, description_zh_cn, description_th, description_ko, description_vi, description_ms,
+        created_by, updated_by) VALUES
+        ('admin', '系統管理員，擁有全部權限',
+         '["dashboard","products","categories","announcements","members","homepage","roles","admins"]',
+         'Administrator','管理者','系统管理员','ผู้ดูแลระบบ','관리자','Quản trị viên','Pentadbir',
+         'System administrator with full access','フルアクセスのシステム管理者','拥有全部权限的系统管理员',
+         'ผู้ดูแลระบบที่มีสิทธิ์เต็มรูปแบบ','모든 권한을 가진 시스템 관리자',
+         'Quản trị viên hệ thống với quyền truy cập đầy đủ','Pentadbir sistem dengan akses penuh',
+         'system', 'system'),
+        ('商品部門', '商品管理員，管理商品、分類與首頁設定',
+         '["dashboard","products","categories","homepage"]',
+         'Product Dept','商品部門','商品部门','ฝ่ายสินค้า','상품 부서','Phòng Sản Phẩm','Jabatan Produk',
+         'Manages products, categories and homepage','商品・カテゴリ・ホームページを管理','管理商品、分类和首页设置',
+         'จัดการสินค้า หมวดหมู่ และหน้าแรก','상품, 카테고리, 홈페이지 관리',
+         'Quản lý sản phẩm, danh mục và trang chủ','Urus produk, kategori dan laman utama',
+         'system', 'system'),
+        ('客服部門', '客服人員，管理前台會員與公告',
+         '["dashboard","announcements","members"]',
+         'Customer Service','カスタマーサービス','客服部门','ฝ่ายบริการลูกค้า','고객 서비스','Dịch Vụ Khách Hàng','Perkhidmatan Pelanggan',
+         'Manages B2C members and announcements','B2C会員と公告を管理','管理B2C会员和公告',
+         'จัดการสมาชิก B2C และประกาศ','B2C 회원 및 공지 관리',
+         'Quản lý thành viên B2C và thông báo','Urus ahli B2C dan pengumuman',
+         'system', 'system')
+    ON CONFLICT (name) DO UPDATE SET
+        name_en = EXCLUDED.name_en, name_ja = EXCLUDED.name_ja,
+        name_zh_cn = EXCLUDED.name_zh_cn, name_th = EXCLUDED.name_th,
+        name_ko = EXCLUDED.name_ko, name_vi = EXCLUDED.name_vi, name_ms = EXCLUDED.name_ms,
+        description_en = EXCLUDED.description_en, description_ja = EXCLUDED.description_ja,
+        description_zh_cn = EXCLUDED.description_zh_cn, description_th = EXCLUDED.description_th,
+        description_ko = EXCLUDED.description_ko, description_vi = EXCLUDED.description_vi,
+        description_ms = EXCLUDED.description_ms;
 """);
 Console.WriteLine("  ✔ b2e_roles（admin / 商品部門 / 客服部門）");
 

@@ -66,6 +66,7 @@ public class AuthService : IAuthService
         await _userRepo.CreateAsync(new User
         {
             Username     = request.Username,
+            DisplayName  = request.Username,
             Email        = request.Email,
             PasswordHash = _enc.HashPassword(request.Password),
             CreatedBy    = request.Username,
@@ -84,6 +85,7 @@ public class AuthService : IAuthService
         {
             Id                = user.Id,
             Username          = user.Username,
+            DisplayName       = user.DisplayName,
             PasswordHash      = user.PasswordHash,
             Email             = user.Email,
             ResetToken        = token,
@@ -128,6 +130,7 @@ public class AuthService : IAuthService
         {
             Id                = user.Id,
             Username          = user.Username,
+            DisplayName       = user.DisplayName,
             PasswordHash      = _enc.HashPassword(request.NewPassword),
             Email             = user.Email,
             ResetToken        = null,

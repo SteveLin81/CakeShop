@@ -43,6 +43,7 @@ public class B2cUserManagementService : IB2cUserManagementService
         var user = new User
         {
             Username     = req.Username,
+            DisplayName  = string.IsNullOrWhiteSpace(req.DisplayName) ? req.Username : req.DisplayName,
             PasswordHash = _encryption.HashPassword(req.Password),
             Email        = req.Email,
             CreatedBy    = operatorName,
@@ -65,8 +66,9 @@ public class B2cUserManagementService : IB2cUserManagementService
                 throw new InvalidOperationException("此 Email 已被其他帳號使用");
         }
 
-        user.Email     = req.Email;
-        user.UpdatedBy = operatorName;
+        user.DisplayName = req.DisplayName;
+        user.Email       = req.Email;
+        user.UpdatedBy   = operatorName;
         if (!string.IsNullOrWhiteSpace(req.NewPassword))
             user.PasswordHash = _encryption.HashPassword(req.NewPassword);
 
@@ -80,6 +82,7 @@ public class B2cUserManagementService : IB2cUserManagementService
     {
         Id          = u.Id,
         Username    = u.Username,
+        DisplayName = u.DisplayName,
         Email       = u.Email,
         CreatedAt   = u.CreatedAt,
         UpdatedAt   = u.UpdatedAt,

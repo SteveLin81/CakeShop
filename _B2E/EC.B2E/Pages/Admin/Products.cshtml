@@ -28,8 +28,8 @@
   </div>
 
   <!-- Table -->
-  <el-table :data="filteredProducts" v-loading="loading" stripe style="width:100%">
-    <el-table-column :label="t('product.name')" min-width="160">
+  <el-table :data="filteredProducts" v-loading="loading" stripe style="width:100%" :key="locale">
+    <el-table-column :label="t('product.colName')" min-width="160">
       <template #default="{ row }">{{ localName(row) }}</template>
     </el-table-column>
     <el-table-column :label="t('product.category')" width="100">
@@ -247,12 +247,11 @@ createApp({
       return map[locale.value] || row.name;
     }
     function localCategoryName(row) {
-      if (!row.category) return '';
       const map = {
-        'en': row.category.nameEn, 'ja': row.category.nameJa, 'zh-CN': row.category.nameZhCn,
-        'th': row.category.nameTh, 'ko': row.category.nameKo, 'vi': row.category.nameVi, 'ms': row.category.nameMs
+        'en': row.categoryNameEn, 'ja': row.categoryNameJa, 'zh-CN': row.categoryNameZhCn,
+        'th': row.categoryNameTh, 'ko': row.categoryNameKo, 'vi': row.categoryNameVi, 'ms': row.categoryNameMs
       };
-      return map[locale.value] || row.category.name;
+      return map[locale.value] || row.categoryName || '';
     }
 
     async function doDelete(id) {

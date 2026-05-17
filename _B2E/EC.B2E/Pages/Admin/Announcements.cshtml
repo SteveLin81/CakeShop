@@ -23,8 +23,8 @@
     </div>
   </div>
 
-  <el-table :data="filteredAnnouncements" v-loading="loading" stripe style="width:100%">
-    <el-table-column :label="t('announcement.content')" min-width="240">
+  <el-table :data="filteredAnnouncements" v-loading="loading" stripe style="width:100%" :key="locale">
+    <el-table-column :label="t('announcement.colContent')" min-width="240">
       <template #default="{ row }">{{ localContent(row) }}</template>
     </el-table-column>
     <el-table-column :label="t('announcement.isActive')" width="120">
