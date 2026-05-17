@@ -1155,6 +1155,8 @@ dotnet test _Test/EC.Test
 - [x] `b2e-common.js` 新增 `requirePermission(key)` 函式：呼叫 `checkAuth()` 後若無對應 permission 自動跳轉 `/b2e/no-permission`；各功能頁 onMounted 改用此函式（Products→products, Categories→categories, Announcements→announcements, Users→members, Roles→roles, Admins→admins）
 - [x] B2E 後台帳號 Email 唯一性：`B2eAdminManagementService` CreateAsync/UpdateAsync 加入重複 email 檢查（排除自己）
 - [x] B2C 前台會員 Username / Email 唯一性：`B2cUserManagementService` CreateAsync 加入重複 username 和 email 檢查；UpdateAsync 加入 email 排除自己檢查；重複時拋出 `InvalidOperationException` 並回傳 409 Conflict
+- [x] 修正 B2E 修改密碼頁面空白：`el-form`/`el-input show-password` 在 Element Plus CDN 全域建置版有渲染問題，改為純 HTML `<input class="b2e-form-input">` + 原生 `<div>` 警告框；驗證錯誤改用 `errorMsg` ref 直接顯示於頁面
+- [x] 修正 B2E Sidebar 修改密碼 / 登出 tooltip 不顯示 i18n：Vue 3 不支援 attribute 中的 `{{ }}` mustache 插值，`title="{{ t('...') }}"` 改為 `:title="t('...')"` (v-bind)
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）
 - [ ] 加入結帳 / 訂單管理功能
