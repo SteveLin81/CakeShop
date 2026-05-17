@@ -63,9 +63,9 @@
           <div class="b2e-user-role">{{ adminRole || t('menu.adminRole') }}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px">
-          <a href="/b2e/admin/change-password" title="{{ t('menu.changePassword') }}"
+          <a href="/b2e/admin/change-password" :title="t('menu.changePassword')"
              style="color:rgba(255,255,255,.6);font-size:1rem;text-decoration:none;line-height:1">🔒</a>
-          <button class="b2e-logout-btn" @@click="logout" title="{{ t('auth.logout') }}">⏻</button>
+          <button class="b2e-logout-btn" @@click="logout" :title="t('auth.logout')">⏻</button>
         </div>
       </div>
     </aside>
