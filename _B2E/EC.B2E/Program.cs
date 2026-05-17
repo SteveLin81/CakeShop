@@ -46,6 +46,9 @@ builder.Services.AddScoped<IB2cUserManagementService,     B2cUserManagementServi
 // ── Email ─────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IEmailService,                 EmailService>();
 
+// ── System Log ────────────────────────────────────────────────────────
+builder.Services.AddSingleton<ISystemLogService, SystemLogService>();
+
 // ── Rate Limiting ─────────────────────────────────────────────────────
 builder.Services.AddRateLimiter(options =>
 {

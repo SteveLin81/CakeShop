@@ -29,6 +29,9 @@ public class B2eAdminManagementService : IB2eAdminManagementService
         var all = await _repo.GetAllAsync();
         if (all.Any(u => u.Username.Equals(req.Username, StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("帳號已存在");
+        if (!string.IsNullOrWhiteSpace(req.Email) &&
+            all.Any(u => u.Email.Equals(req.Email, StringComparison.OrdinalIgnoreCase)))
+            throw new InvalidOperationException("此 Email 已被其他帳號使用");
 
         var user = new B2eUser
         {
@@ -47,6 +50,12 @@ public class B2eAdminManagementService : IB2eAdminManagementService
     {
         var existing = await _repo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"帳號 {id} 不存在");
+        if (!string.IsNullOrWhiteSpace(req.Email))
+        {
+            var all = await _repo.GetAllAsync();
+            if (all.Any(u => u.Id != id && u.Email.Equals(req.Email, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("此 Email 已被其他帳號使用");
+        }
         existing.Email     = req.Email;
         existing.RoleId    = req.RoleId;
         existing.UpdatedBy = operatorName;

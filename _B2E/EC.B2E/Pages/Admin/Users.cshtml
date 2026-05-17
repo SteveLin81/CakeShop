@@ -120,8 +120,8 @@ createApp({
           common.showToast(common.t('common.success'));
           dialogVisible.value = false;
           await loadData();
-        } else { common.showToast(res.message || common.t('common.error')); }
-      } catch { common.showToast(common.t('common.error')); }
+        } else { common.showError(res.message || common.t('common.error')); }
+      } catch { common.showError(common.t('common.error')); }
       finally { saving.value = false; }
     }
 
@@ -130,11 +130,11 @@ createApp({
         await b2eApi.deleteUser(id);
         common.showToast(common.t('common.success'));
         await loadData();
-      } catch { common.showToast(common.t('common.error')); }
+      } catch { common.showError(common.t('common.error')); }
     }
 
     onMounted(async () => {
-      await common.checkAuth();
+      await common.requirePermission('members');
       await loadData();
     });
 

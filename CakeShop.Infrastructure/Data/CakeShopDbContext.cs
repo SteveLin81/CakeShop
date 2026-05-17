@@ -14,6 +14,7 @@ public class CakeShopDbContext : DbContext
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<B2eUser>      B2eUsers      => Set<B2eUser>();
     public DbSet<B2eRole>      B2eRoles      => Set<B2eRole>();
+    public DbSet<SystemLog>    SystemLogs    => Set<SystemLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -64,6 +65,11 @@ public class CakeShopDbContext : DbContext
              .WithMany()
              .HasForeignKey(u => u.RoleId)
              .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<SystemLog>(e => {
+            e.HasKey(s => s.Id);
+            e.ToTable("system_logs");
         });
     }
 

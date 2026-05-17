@@ -410,6 +410,21 @@ dotnet run
 | `content_en` … `content_ms` | `TEXT` (nullable) | 其餘 7 語系（為空時退回英文） |
 | `is_active` | `BOOLEAN` | 是否啟用（同時只有 1 筆啟用，B2E 可切換） |
 
+#### system_logs（系統錯誤日誌）
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| `id` | `SERIAL PK` | |
+| `log_time` | `TIMESTAMPTZ` | 記錄時間（UTC） |
+| `username` | `VARCHAR(100)` | 操作者帳號 |
+| `project` | `VARCHAR(20)` | 來源專案（"B2C" / "B2E" / "API"） |
+| `function_name` | `VARCHAR(200)` | 功能名稱（Controller Action 名稱） |
+| `error_message` | `TEXT` | 錯誤說明 |
+| `exception_msg` | `TEXT` (nullable) | 完整 Exception 堆疊訊息 |
+| `log_level` | `VARCHAR(20)` | 日誌等級（預設 "Error"） |
+
+> 由 `SystemLogService`（Singleton）使用 `IServiceScopeFactory` 建立獨立 DB scope 寫入，避免主 DbContext 狀態影響日誌儲存。
+
 ### EF Core Migrations
 
 ```bash
@@ -1133,6 +1148,13 @@ dotnet test _Test/EC.Test
 - [x] Gmail SMTP 密碼更新為應用程式密碼（App Password，需先開啟兩步驟驗證）；忘記密碼發信失敗時改以 `LogError` 輸出完整錯誤並以 `LogWarning` 印出開發用重設連結（fallback for SMTP failure）
 - [x] 修正 B2E 修改密碼頁空白問題：`ChangePassword.cshtml` 原本有獨立 `onMounted` 自行呼叫 `getMe()`，若回應非預期時 redirect 至 login 導致畫面空白；改用與其他管理頁一致的 `common.checkAuth()`，確保**任何角色**（含無角色帳號）均可正常進入變更密碼頁面
 - [x] `b2e-common.js` 新增 `mustChangePassword` reactive ref：`checkAuth()` 成功後統一設定，各管理頁可直接透過 `common.mustChangePassword` 讀取首次登入強制改密碼狀態
+- [x] 新增 `system_logs` 資料表（時間 / 使用者 / 專案 / 功能名 / 錯誤說明 / Exception 訊息）；`ISystemLogService` / `SystemLogService`（Singleton，使用 `IServiceScopeFactory` 建立獨立 DB scope）
+- [x] B2E 所有 Controller（Product / Announcement / User / Role / Admin / Category）完整 try-catch：`InvalidOperationException` → 409 Conflict、`KeyNotFoundException` → 404、其他 → 500 並寫入 system_logs
+- [x] B2E 前端送出失敗改用 `ElMessageBox.alert` 彈窗（`showError()`）：所有 Admin 頁面的 submitForm / doDelete 失敗改為顯示具體錯誤訊息對話框，不再只有 toast
+- [x] 新增 `/b2e/no-permission` 權限不足頁面：獨立 Layout，顯示「您沒有存取此功能的權限」並提供返回儀表板連結
+- [x] `b2e-common.js` 新增 `requirePermission(key)` 函式：呼叫 `checkAuth()` 後若無對應 permission 自動跳轉 `/b2e/no-permission`；各功能頁 onMounted 改用此函式（Products→products, Categories→categories, Announcements→announcements, Users→members, Roles→roles, Admins→admins）
+- [x] B2E 後台帳號 Email 唯一性：`B2eAdminManagementService` CreateAsync/UpdateAsync 加入重複 email 檢查（排除自己）
+- [x] B2C 前台會員 Username / Email 唯一性：`B2cUserManagementService` CreateAsync 加入重複 username 和 email 檢查；UpdateAsync 加入 email 排除自己檢查；重複時拋出 `InvalidOperationException` 並回傳 409 Conflict
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）
 - [ ] 加入結帳 / 訂單管理功能

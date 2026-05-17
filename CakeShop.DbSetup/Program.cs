@@ -230,7 +230,21 @@ await Execute(db, """
     );
 """);
 
-Console.WriteLine("✔ 7 張資料表建立完成（含 b2e_roles / b2e_users）");
+// system_logs
+await Execute(db, """
+    CREATE TABLE IF NOT EXISTS system_logs (
+        id            SERIAL       PRIMARY KEY,
+        log_time      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        username      VARCHAR(100) NOT NULL DEFAULT '',
+        project       VARCHAR(20)  NOT NULL DEFAULT '',
+        function_name VARCHAR(200) NOT NULL DEFAULT '',
+        error_message TEXT         NOT NULL DEFAULT '',
+        exception_msg TEXT,
+        log_level     VARCHAR(20)  NOT NULL DEFAULT 'Error'
+    );
+""");
+
+Console.WriteLine("✔ 8 張資料表建立完成（含 b2e_roles / b2e_users / system_logs）");
 
 // ── Step 2b：新增多語系欄位（IF NOT EXISTS，安全重複執行）─────────────
 await Execute(db, """

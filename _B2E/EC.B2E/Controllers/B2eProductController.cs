@@ -13,13 +13,15 @@ public class B2eProductController : ControllerBase
     private readonly IProductManagementService _mgmtSvc;
     private readonly IProductService           _productSvc;
     private readonly ILogger<B2eProductController> _logger;
+    private readonly ISystemLogService _log;
 
     public B2eProductController(IProductManagementService mgmtSvc, IProductService productSvc,
-        ILogger<B2eProductController> logger)
+        ILogger<B2eProductController> logger, ISystemLogService log)
     {
         _mgmtSvc    = mgmtSvc;
         _productSvc = productSvc;
         _logger     = logger;
+        _log        = log;
     }
 
     [HttpGet]
@@ -55,10 +57,13 @@ public class B2eProductController : ControllerBase
             return CreatedAtAction(nameof(GetById), new { id = dto.Id },
                 ApiResult<ProductDto>.Ok(dto, "商品新增成功"));
         }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "商品新增失敗");
-            return BadRequest(ApiResult<object>.Fail("商品新增失敗，請稍後再試"));
+            var op = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Create), ex.Message, op, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
         }
     }
 
@@ -72,14 +77,13 @@ public class B2eProductController : ControllerBase
             var dto = await _mgmtSvc.UpdateProductAsync(id, request, operatorName);
             return Ok(ApiResult<ProductDto>.Ok(dto, "商品更新成功"));
         }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(ApiResult<object>.Fail($"商品 {id} 不存在"));
-        }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "商品更新失敗 id={Id}", id);
-            return BadRequest(ApiResult<object>.Fail("商品更新失敗，請稍後再試"));
+            var op = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Update), ex.Message, op, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
         }
     }
 
@@ -91,10 +95,13 @@ public class B2eProductController : ControllerBase
             await _mgmtSvc.DeleteProductAsync(id);
             return Ok(ApiResult<object>.Ok(new { }, "商品刪除成功"));
         }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "商品刪除失敗 id={Id}", id);
-            return BadRequest(ApiResult<object>.Fail("商品刪除失敗，請稍後再試"));
+            var op = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Delete), ex.Message, op, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
         }
     }
 

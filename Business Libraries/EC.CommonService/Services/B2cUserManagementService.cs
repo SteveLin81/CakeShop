@@ -31,7 +31,14 @@ public class B2cUserManagementService : IB2cUserManagementService
     {
         var existing = await _userRepo.GetByUsernameAsync(req.Username);
         if (existing is not null)
-            throw new InvalidOperationException($"帳號 '{req.Username}' 已存在");
+            throw new InvalidOperationException("帳號已存在");
+        if (!string.IsNullOrWhiteSpace(req.Email))
+        {
+            var all = await _userRepo.GetAllAsync();
+            if (all.Any(u => !string.IsNullOrWhiteSpace(u.Email) &&
+                             u.Email.Equals(req.Email, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("此 Email 已被其他帳號使用");
+        }
 
         var user = new User
         {
@@ -49,6 +56,14 @@ public class B2cUserManagementService : IB2cUserManagementService
     {
         var user = await _userRepo.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"會員 {id} 不存在");
+
+        if (!string.IsNullOrWhiteSpace(req.Email))
+        {
+            var all = await _userRepo.GetAllAsync();
+            if (all.Any(u => u.Id != id && !string.IsNullOrWhiteSpace(u.Email) &&
+                             u.Email.Equals(req.Email, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("此 Email 已被其他帳號使用");
+        }
 
         user.Email     = req.Email;
         user.UpdatedBy = operatorName;

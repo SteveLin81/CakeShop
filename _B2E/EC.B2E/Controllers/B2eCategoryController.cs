@@ -12,11 +12,13 @@ public class B2eCategoryController : ControllerBase
 {
     private readonly ICategoryManagementService _svc;
     private readonly ILogger<B2eCategoryController> _logger;
+    private readonly ISystemLogService _log;
 
-    public B2eCategoryController(ICategoryManagementService svc, ILogger<B2eCategoryController> logger)
+    public B2eCategoryController(ICategoryManagementService svc, ILogger<B2eCategoryController> logger, ISystemLogService log)
     {
         _svc    = svc;
         _logger = logger;
+        _log    = log;
     }
 
     [HttpGet]
@@ -45,10 +47,13 @@ public class B2eCategoryController : ControllerBase
             return CreatedAtAction(nameof(GetById), new { id = dto.Id },
                 ApiResult<CategoryDto>.Ok(dto, "分類新增成功"));
         }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "分類新增失敗");
-            return BadRequest(ApiResult<object>.Fail("分類新增失敗，請稍後再試"));
+            var username = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Create), ex.Message, username, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
         }
     }
 
@@ -62,11 +67,13 @@ public class B2eCategoryController : ControllerBase
             var dto = await _svc.UpdateAsync(id, request, op);
             return Ok(ApiResult<CategoryDto>.Ok(dto, "分類更新成功"));
         }
-        catch (KeyNotFoundException) { return NotFound(ApiResult<object>.Fail($"分類 {id} 不存在")); }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "分類更新失敗 id={Id}", id);
-            return BadRequest(ApiResult<object>.Fail("分類更新失敗，請稍後再試"));
+            var username = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Update), ex.Message, username, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
         }
     }
 
@@ -78,10 +85,13 @@ public class B2eCategoryController : ControllerBase
             await _svc.DeleteAsync(id);
             return Ok(ApiResult<object>.Ok(new { }, "分類刪除成功"));
         }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "分類刪除失敗 id={Id}", id);
-            return BadRequest(ApiResult<object>.Fail("分類刪除失敗（可能有商品使用此分類）"));
+            var username = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Delete), ex.Message, username, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
         }
     }
 }

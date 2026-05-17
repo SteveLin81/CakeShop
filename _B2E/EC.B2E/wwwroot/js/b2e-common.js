@@ -36,6 +36,13 @@ function useB2eCommon() {
 
   function hasPermission(key) { return permissions.value.includes(key); }
 
+  async function requirePermission(key) {
+    await checkAuth();
+    if (key && !permissions.value.includes(key)) {
+        location.href = '/b2e/no-permission';
+    }
+  }
+
   async function checkAuth() {
     const token = localStorage.getItem('b2eToken');
     if (!token) { location.href = '/b2e/login'; return; }
@@ -84,10 +91,17 @@ function useB2eCommon() {
     toastTimer = setTimeout(() => { toast.value = ''; }, 3000);
   }
 
+  function showError(msg) {
+    ElementPlus.ElMessageBox.alert(msg, '操作失敗', {
+        confirmButtonText: '確定',
+        type: 'error',
+    }).catch(() => {});
+  }
+
   return {
     t, locale, langs, currentLangLabel, setLocale, showLangMenu,
-    adminUsername, adminRole, permissions, mustChangePassword, hasPermission, checkAuth, logout,
-    sidebarOpen, toast, toastType, showToast,
+    adminUsername, adminRole, permissions, mustChangePassword, hasPermission, checkAuth, requirePermission, logout,
+    sidebarOpen, toast, toastType, showToast, showError,
   };
 }
 

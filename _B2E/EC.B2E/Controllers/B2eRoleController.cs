@@ -12,11 +12,13 @@ public class B2eRoleController : ControllerBase
 {
     private readonly IB2eRoleManagementService _svc;
     private readonly ILogger<B2eRoleController> _logger;
+    private readonly ISystemLogService _log;
 
-    public B2eRoleController(IB2eRoleManagementService svc, ILogger<B2eRoleController> logger)
+    public B2eRoleController(IB2eRoleManagementService svc, ILogger<B2eRoleController> logger, ISystemLogService log)
     {
         _svc    = svc;
         _logger = logger;
+        _log    = log;
     }
 
     [HttpGet]
@@ -47,7 +49,14 @@ public class B2eRoleController : ControllerBase
             return CreatedAtAction(nameof(GetById), new { id = dto.Id },
                 ApiResult<B2eRoleDto>.Ok(dto, "角色新增成功"));
         }
-        catch (Exception ex) { _logger.LogError(ex, "角色新增失敗"); return BadRequest(ApiResult<object>.Fail("角色新增失敗")); }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+        catch (Exception ex)
+        {
+            var username = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Create), ex.Message, username, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
+        }
     }
 
     [HttpPut("{id:int}")]
@@ -62,8 +71,14 @@ public class B2eRoleController : ControllerBase
             var dto = await _svc.UpdateAsync(id, request, op);
             return Ok(ApiResult<B2eRoleDto>.Ok(dto, "角色更新成功"));
         }
-        catch (KeyNotFoundException) { return NotFound(ApiResult<object>.Fail($"角色 {id} 不存在")); }
-        catch (Exception ex) { _logger.LogError(ex, "角色更新失敗 id={Id}", id); return BadRequest(ApiResult<object>.Fail("角色更新失敗")); }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+        catch (Exception ex)
+        {
+            var username = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Update), ex.Message, username, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
+        }
     }
 
     [HttpDelete("{id:int}")]
@@ -71,7 +86,18 @@ public class B2eRoleController : ControllerBase
     {
         if (!HttpContext.HasPermission(B2ePermissions.Roles))
             return StatusCode(403, ApiResult<object>.Fail("沒有角色管理權限"));
-        try { await _svc.DeleteAsync(id); return Ok(ApiResult<object>.Ok(new { }, "角色刪除成功")); }
-        catch (Exception ex) { _logger.LogError(ex, "角色刪除失敗 id={Id}", id); return BadRequest(ApiResult<object>.Fail("角色刪除失敗")); }
+        try
+        {
+            await _svc.DeleteAsync(id);
+            return Ok(ApiResult<object>.Ok(new { }, "角色刪除成功"));
+        }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+        catch (Exception ex)
+        {
+            var username = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Delete), ex.Message, username, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
+        }
     }
 }

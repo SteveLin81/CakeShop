@@ -126,8 +126,8 @@ createApp({
           ? await b2eApi.updateAdmin(editId.value, { email: form.email, roleId: form.roleId })
           : await b2eApi.createAdmin({ username: form.username, email: form.email, roleId: form.roleId });
         if (res.success) { common.showToast(common.t('common.success')); dialogVisible.value = false; await loadData(); }
-        else common.showToast(res.message || common.t('common.error'));
-      } catch { common.showToast(common.t('common.error')); }
+        else common.showError(res.message || common.t('common.error'));
+      } catch { common.showError(common.t('common.error')); }
       finally { saving.value = false; }
     }
 
@@ -135,11 +135,11 @@ createApp({
       try {
         const res = await b2eApi.deleteAdmin(id);
         if (res.success) { common.showToast(common.t('common.success')); await loadData(); }
-        else common.showToast(res.message || common.t('common.error'));
-      } catch { common.showToast(common.t('common.error')); }
+        else common.showError(res.message || common.t('common.error'));
+      } catch { common.showError(common.t('common.error')); }
     }
 
-    onMounted(async () => { await common.checkAuth(); await loadData(); });
+    onMounted(async () => { await common.requirePermission('admins'); await loadData(); });
 
     return { ...common, loading, saving, admins, roles, dialogVisible, isEdit, form, formErrors,
              openCreate, openEdit, submitForm, doDelete, formatDate };

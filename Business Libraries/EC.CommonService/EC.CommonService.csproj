@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\CakeShop.Core\CakeShop.Core.csproj" />
+    <ProjectReference Include="..\..\CakeShop.Infrastructure\CakeShop.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Framework\EC.Entities\EC.Entities.csproj" />
   </ItemGroup>
 

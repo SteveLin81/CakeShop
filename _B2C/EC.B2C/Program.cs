@@ -33,6 +33,9 @@ builder.Services.AddScoped<ICartService,         CartService>();
 builder.Services.AddScoped<IContactService,      ContactService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 
+// ── System Log ────────────────────────────────────────────────────────
+builder.Services.AddSingleton<ISystemLogService, SystemLogService>();
+
 // ── Rate Limiting ─────────────────────────────────────────────────────
 builder.Services.AddRateLimiter(options =>
 {

@@ -170,8 +170,8 @@ createApp({
           common.showToast(common.t('common.success'));
           dialogVisible.value = false;
           await loadData();
-        } else { common.showToast(res.message || common.t('common.error')); }
-      } catch { common.showToast(common.t('common.error')); }
+        } else { common.showError(res.message || common.t('common.error')); }
+      } catch { common.showError(common.t('common.error')); }
       finally { saving.value = false; }
     }
 
@@ -179,8 +179,8 @@ createApp({
       try {
         const res = await b2eApi.activateAnnouncement(id);
         if (res.success) { common.showToast(common.t('common.success')); await loadData(); }
-        else common.showToast(res.message || common.t('common.error'));
-      } catch { common.showToast(common.t('common.error')); }
+        else common.showError(res.message || common.t('common.error'));
+      } catch { common.showError(common.t('common.error')); }
     }
 
     async function doDelete(id) {
@@ -188,11 +188,11 @@ createApp({
         await b2eApi.deleteAnnouncement(id);
         common.showToast(common.t('common.success'));
         await loadData();
-      } catch { common.showToast(common.t('common.error')); }
+      } catch { common.showError(common.t('common.error')); }
     }
 
     onMounted(async () => {
-      await common.checkAuth();
+      await common.requirePermission('announcements');
       await loadData();
     });
 

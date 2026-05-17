@@ -119,8 +119,8 @@ createApp({
           ? await b2eApi.updateRole(editId.value, { ...form })
           : await b2eApi.createRole({ ...form });
         if (res.success) { common.showToast(common.t('common.success')); dialogVisible.value = false; await loadData(); }
-        else common.showToast(res.message || common.t('common.error'));
-      } catch { common.showToast(common.t('common.error')); }
+        else common.showError(res.message || common.t('common.error'));
+      } catch { common.showError(common.t('common.error')); }
       finally { saving.value = false; }
     }
 
@@ -128,11 +128,11 @@ createApp({
       try {
         const res = await b2eApi.deleteRole(id);
         if (res.success) { common.showToast(common.t('common.success')); await loadData(); }
-        else common.showToast(res.message || common.t('common.error'));
-      } catch { common.showToast(common.t('common.error')); }
+        else common.showError(res.message || common.t('common.error'));
+      } catch { common.showError(common.t('common.error')); }
     }
 
-    onMounted(async () => { await common.checkAuth(); await loadData(); });
+    onMounted(async () => { await common.requirePermission('roles'); await loadData(); });
 
     return { ...common, loading, saving, roles, dialogVisible, isEdit, form, allPerms, permLabel,
              openCreate, openEdit, submitForm, doDelete };

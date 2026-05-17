@@ -12,11 +12,13 @@ public class B2eAdminController : ControllerBase
 {
     private readonly IB2eAdminManagementService _svc;
     private readonly ILogger<B2eAdminController> _logger;
+    private readonly ISystemLogService _log;
 
-    public B2eAdminController(IB2eAdminManagementService svc, ILogger<B2eAdminController> logger)
+    public B2eAdminController(IB2eAdminManagementService svc, ILogger<B2eAdminController> logger, ISystemLogService log)
     {
         _svc    = svc;
         _logger = logger;
+        _log    = log;
     }
 
     private IActionResult NoPermission() =>
@@ -51,8 +53,14 @@ public class B2eAdminController : ControllerBase
             return CreatedAtAction(nameof(GetById), new { id = dto.Id },
                 ApiResult<B2eAdminDto>.Ok(dto, "後台帳號新增成功（預設密碼：0000）"));
         }
-        catch (InvalidOperationException) { return Conflict(ApiResult<object>.Fail("帳號已存在")); }
-        catch (Exception ex) { _logger.LogError(ex, "後台帳號新增失敗"); return BadRequest(ApiResult<object>.Fail("新增失敗，請稍後再試")); }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+        catch (Exception ex)
+        {
+            var username = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Create), ex.Message, username, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
+        }
     }
 
     [HttpPut("{id:int}")]
@@ -66,15 +74,32 @@ public class B2eAdminController : ControllerBase
             var dto = await _svc.UpdateAsync(id, request, op);
             return Ok(ApiResult<B2eAdminDto>.Ok(dto, "後台帳號更新成功"));
         }
-        catch (KeyNotFoundException) { return NotFound(ApiResult<object>.Fail($"帳號 {id} 不存在")); }
-        catch (Exception ex) { _logger.LogError(ex, "帳號更新失敗 id={Id}", id); return BadRequest(ApiResult<object>.Fail("更新失敗，請稍後再試")); }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+        catch (Exception ex)
+        {
+            var username = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Update), ex.Message, username, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
+        }
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
         if (!HttpContext.HasPermission(B2ePermissions.Admins)) return NoPermission();
-        try { await _svc.DeleteAsync(id); return Ok(ApiResult<object>.Ok(new { }, "後台帳號刪除成功")); }
-        catch (Exception ex) { _logger.LogError(ex, "帳號刪除失敗 id={Id}", id); return BadRequest(ApiResult<object>.Fail("刪除失敗，請稍後再試")); }
+        try
+        {
+            await _svc.DeleteAsync(id);
+            return Ok(ApiResult<object>.Ok(new { }, "後台帳號刪除成功"));
+        }
+        catch (InvalidOperationException ex) { return Conflict(ApiResult<object>.Fail(ex.Message)); }
+        catch (KeyNotFoundException ex)      { return NotFound(ApiResult<object>.Fail(ex.Message)); }
+        catch (Exception ex)
+        {
+            var username = HttpContext.Items["b2e-username"]?.ToString() ?? "unknown";
+            await _log.WriteAsync("B2E", nameof(Delete), ex.Message, username, ex);
+            return StatusCode(500, ApiResult<object>.Fail($"操作失敗：{ex.Message}"));
+        }
     }
 }
