@@ -143,6 +143,7 @@ const { createApp, ref, reactive, computed, onMounted } = Vue;
 createApp({
   setup() {
     const common        = useB2eCommon();
+    const { locale }    = common;
     const loading       = ref(false);
     const saving        = ref(false);
     const products      = ref([]);
