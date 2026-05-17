@@ -25,9 +25,7 @@
 
   <el-table :data="filteredAnnouncements" v-loading="loading" stripe style="width:100%">
     <el-table-column :label="t('announcement.content')" min-width="240">
-      <template #default="{ row }">
-        <div style="white-space:pre-wrap;word-break:break-word;max-height:60px;overflow:hidden">{{ row.content }}</div>
-      </template>
+      <template #default="{ row }">{{ localContent(row) }}</template>
     </el-table-column>
     <el-table-column :label="t('announcement.isActive')" width="120">
       <template #default="{ row }">
@@ -175,6 +173,14 @@ createApp({
       finally { saving.value = false; }
     }
 
+    function localContent(row) {
+      const map = {
+        'en': row.contentEn, 'ja': row.contentJa, 'zh-CN': row.contentZhCn,
+        'th': row.contentTh, 'ko': row.contentKo, 'vi': row.contentVi, 'ms': row.contentMs
+      };
+      return map[locale.value] || row.content;
+    }
+
     async function doActivate(id) {
       try {
         const res = await b2eApi.activateAnnouncement(id);
@@ -197,7 +203,8 @@ createApp({
     });
 
     return { ...common, loading, saving, announcements, searchText, filteredAnnouncements,
-             dialogVisible, isEdit, activeTab, form, openCreate, openEdit, submitForm, doActivate, doDelete, formatDate };
+             dialogVisible, isEdit, activeTab, form, openCreate, openEdit, submitForm, doActivate, doDelete, formatDate,
+             localContent };
   }
 }).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
 </script>

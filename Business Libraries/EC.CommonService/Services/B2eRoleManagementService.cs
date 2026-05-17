@@ -29,6 +29,20 @@ public class B2eRoleManagementService : IB2eRoleManagementService
             Permissions = JsonSerializer.Serialize(req.Permissions),
             CreatedBy   = operatorName,
             UpdatedBy   = operatorName,
+            NameEn      = req.NameEn,
+            NameJa      = req.NameJa,
+            NameZhCn    = req.NameZhCn,
+            NameTh      = req.NameTh,
+            NameKo      = req.NameKo,
+            NameVi      = req.NameVi,
+            NameMs      = req.NameMs,
+            DescriptionEn   = req.DescriptionEn,
+            DescriptionJa   = req.DescriptionJa,
+            DescriptionZhCn = req.DescriptionZhCn,
+            DescriptionTh   = req.DescriptionTh,
+            DescriptionKo   = req.DescriptionKo,
+            DescriptionVi   = req.DescriptionVi,
+            DescriptionMs   = req.DescriptionMs,
         };
         return MapToDto(await _repo.CreateAsync(role));
     }
@@ -41,6 +55,20 @@ public class B2eRoleManagementService : IB2eRoleManagementService
         existing.Description = req.Description;
         existing.Permissions = JsonSerializer.Serialize(req.Permissions);
         existing.UpdatedBy   = operatorName;
+        existing.NameEn      = req.NameEn;
+        existing.NameJa      = req.NameJa;
+        existing.NameZhCn    = req.NameZhCn;
+        existing.NameTh      = req.NameTh;
+        existing.NameKo      = req.NameKo;
+        existing.NameVi      = req.NameVi;
+        existing.NameMs      = req.NameMs;
+        existing.DescriptionEn   = req.DescriptionEn;
+        existing.DescriptionJa   = req.DescriptionJa;
+        existing.DescriptionZhCn = req.DescriptionZhCn;
+        existing.DescriptionTh   = req.DescriptionTh;
+        existing.DescriptionKo   = req.DescriptionKo;
+        existing.DescriptionVi   = req.DescriptionVi;
+        existing.DescriptionMs   = req.DescriptionMs;
         return MapToDto(await _repo.UpdateAsync(existing));
     }
 
@@ -52,5 +80,19 @@ public class B2eRoleManagementService : IB2eRoleManagementService
         Name        = r.Name,
         Description = r.Description,
         Permissions = B2eAuthService.ParsePermissions(r.Permissions),
+        NameEn      = r.NameEn,
+        NameJa      = r.NameJa,
+        NameZhCn    = r.NameZhCn,
+        NameTh      = r.NameTh,
+        NameKo      = r.NameKo,
+        NameVi      = r.NameVi,
+        NameMs      = r.NameMs,
+        DescriptionEn   = r.DescriptionEn,
+        DescriptionJa   = r.DescriptionJa,
+        DescriptionZhCn = r.DescriptionZhCn,
+        DescriptionTh   = r.DescriptionTh,
+        DescriptionKo   = r.DescriptionKo,
+        DescriptionVi   = r.DescriptionVi,
+        DescriptionMs   = r.DescriptionMs,
     };
 }

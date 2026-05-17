@@ -15,6 +15,9 @@
     <el-table-column :label="t('admin.username')" width="140">
       <template #default="{ row }">{{ row.username }}</template>
     </el-table-column>
+    <el-table-column label="使用者名稱" width="140">
+      <template #default="{ row }">{{ row.displayName }}</template>
+    </el-table-column>
     <el-table-column :label="t('admin.email')" min-width="180">
       <template #default="{ row }">{{ row.email }}</template>
     </el-table-column>
@@ -22,7 +25,7 @@
       <template #default="{ row }">
         <span v-if="row.roleName"
               style="display:inline-block;background:#e8f4fd;color:#1a73e8;border-radius:4px;padding:2px 8px;font-size:.8rem">
-          {{ row.roleName }}
+          {{ localRoleName(row) }}
         </span>
         <span v-else style="color:#999;font-size:.8rem">{{ t('admin.noRole') }}</span>
       </template>
@@ -51,6 +54,9 @@
   <el-form label-width="100px">
     <el-form-item :label="t('admin.username')" required>
       <el-input v-model="form.username" :disabled="isEdit" :placeholder="t('admin.usernameReq')" />
+    </el-form-item>
+    <el-form-item label="使用者名稱" :required="!isEdit">
+      <el-input v-model="form.displayName" placeholder="請輸入顯示名稱" />
     </el-form-item>
     <el-form-item label="Email" required>
       <el-input v-model="form.email" type="email" placeholder="example@company.com" />
@@ -86,7 +92,7 @@ createApp({
     const dialogVisible = ref(false);
     const isEdit   = ref(false);
     const editId   = ref(null);
-    const form       = reactive({ username: '', email: '', roleId: null });
+    const form       = reactive({ username: '', displayName: '', email: '', roleId: null });
     const formErrors = reactive({ email: '' });
 
     async function loadData() {
@@ -99,16 +105,26 @@ createApp({
       finally { loading.value = false; }
     }
 
+    function localRoleName(row) {
+      const role = roles.value.find(r => r.id === row.roleId);
+      if (!role) return row.roleName || '';
+      const map = {
+        'en': role.nameEn, 'ja': role.nameJa, 'zh-CN': role.nameZhCn,
+        'th': role.nameTh, 'ko': role.nameKo, 'vi': role.nameVi, 'ms': role.nameMs
+      };
+      return map[locale.value] || role.name;
+    }
+
     function openCreate() {
       isEdit.value = false; editId.value = null;
-      Object.assign(form, { username: '', email: '', roleId: null });
+      Object.assign(form, { username: '', displayName: '', email: '', roleId: null });
       Object.assign(formErrors, { email: '' });
       dialogVisible.value = true;
     }
 
     function openEdit(row) {
       isEdit.value = true; editId.value = row.id;
-      Object.assign(form, { username: row.username, email: row.email || '', roleId: row.roleId || null });
+      Object.assign(form, { username: row.username, displayName: row.displayName || '', email: row.email || '', roleId: row.roleId || null });
       Object.assign(formErrors, { email: '' });
       dialogVisible.value = true;
     }
@@ -116,6 +132,7 @@ createApp({
     async function submitForm() {
       Object.assign(formErrors, { email: '' });
       if (!form.username.trim()) { common.showToast(common.t('admin.usernameReq')); return; }
+      if (!form.displayName.trim() && !isEdit.value) { common.showToast('使用者名稱為必填'); return; }
       if (!isEdit.value) {
         if (!form.email.trim()) { formErrors.email = 'Email 為必填'; return; }
         if (!/^[^@@\s]+@@[^@@\s]+\.[^@@\s]+$/.test(form.email)) { formErrors.email = 'Email 格式不正確'; return; }
@@ -123,8 +140,8 @@ createApp({
       saving.value = true;
       try {
         const res = isEdit.value
-          ? await b2eApi.updateAdmin(editId.value, { email: form.email, roleId: form.roleId })
-          : await b2eApi.createAdmin({ username: form.username, email: form.email, roleId: form.roleId });
+          ? await b2eApi.updateAdmin(editId.value, { displayName: form.displayName, email: form.email, roleId: form.roleId })
+          : await b2eApi.createAdmin({ username: form.username, displayName: form.displayName, email: form.email, roleId: form.roleId });
         if (res.success) { common.showToast(common.t('common.success')); dialogVisible.value = false; await loadData(); }
         else common.showError(res.message || common.t('common.error'));
       } catch { common.showError(common.t('common.error')); }
@@ -142,7 +159,7 @@ createApp({
     onMounted(async () => { await common.requirePermission('admins'); await loadData(); });
 
     return { ...common, loading, saving, admins, roles, dialogVisible, isEdit, form, formErrors,
-             openCreate, openEdit, submitForm, doDelete, formatDate };
+             openCreate, openEdit, submitForm, doDelete, formatDate, localRoleName };
   }
 }).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
 </script>

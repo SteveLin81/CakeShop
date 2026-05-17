@@ -100,6 +100,7 @@ public class B2eAuthService : IB2eAuthService
     {
         Id                 = u.Id,
         Username           = u.Username,
+        DisplayName        = u.DisplayName,
         Email              = u.Email,
         RoleId             = u.RoleId,
         RoleName           = u.Role?.Name ?? string.Empty,

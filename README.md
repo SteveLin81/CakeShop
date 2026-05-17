@@ -1157,6 +1157,11 @@ dotnet test _Test/EC.Test
 - [x] B2C 前台會員 Username / Email 唯一性：`B2cUserManagementService` CreateAsync 加入重複 username 和 email 檢查；UpdateAsync 加入 email 排除自己檢查；重複時拋出 `InvalidOperationException` 並回傳 409 Conflict
 - [x] 修正 B2E 修改密碼頁面空白：`el-form`/`el-input show-password` 在 Element Plus CDN 全域建置版有渲染問題，改為純 HTML `<input class="b2e-form-input">` + 原生 `<div>` 警告框；驗證錯誤改用 `errorMsg` ref 直接顯示於頁面
 - [x] 修正 B2E Sidebar 修改密碼 / 登出 tooltip 不顯示 i18n：Vue 3 不支援 attribute 中的 `{{ }}` mustache 插值，`title="{{ t('...') }}"` 改為 `:title="t('...')"` (v-bind)
+- [x] B2E 商品管理列表名稱與分類依語系顯示：加入 `localName(row)` / `localCategoryName(row)` 函式，依 `locale.value` 動態切換語系名稱
+- [x] B2E 公告管理列表內容依語系顯示：加入 `localContent(row)` 函式，依語系顯示對應內容欄位
+- [x] B2E 角色權限管理支援 8 語系：`B2eRole` entity / `B2eRoleDto` / `B2eRoleSaveRequest` 新增 14 個語系欄位（name/description × 7 語系）；`b2e_roles` 資料表 ALTER TABLE 新增對應欄位；Roles.cshtml 列表依語系顯示、表單以 `el-tabs` 組織 8 語言輸入
+- [x] B2E 後台帳號管理角色名稱依語系顯示：加入 `localRoleName(row)` 函式，從 roles 陣列中查找對應角色並顯示語系名稱
+- [x] B2E 後台帳號新增「使用者名稱」(DisplayName) 欄位：`B2eUser` entity 新增 `DisplayName`；`B2eAdminDto/CreateRequest/UpdateRequest` 新增對應欄位（Create 必填）；`b2e_users` 資料表 ALTER TABLE 新增 `display_name` 欄位並 UPDATE 預設值為帳號名；Admins.cshtml 列表新增使用者名稱欄、對話框新增輸入欄位
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）
 - [ ] 加入結帳 / 訂單管理功能

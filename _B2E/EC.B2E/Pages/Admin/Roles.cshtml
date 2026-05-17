@@ -13,10 +13,10 @@
 <div class="b2e-card">
   <el-table :data="roles" v-loading="loading" stripe style="width:100%">
     <el-table-column :label="t('role.name')" width="140">
-      <template #default="{ row }">{{ row.name }}</template>
+      <template #default="{ row }">{{ localRoleName(row) }}</template>
     </el-table-column>
     <el-table-column :label="t('role.description')" min-width="180">
-      <template #default="{ row }">{{ row.description }}</template>
+      <template #default="{ row }">{{ localRoleDesc(row) }}</template>
     </el-table-column>
     <el-table-column :label="t('role.permissions')" min-width="280">
       <template #default="{ row }">
@@ -39,22 +39,72 @@
 
 <!-- Add/Edit Dialog -->
 <el-dialog v-model="dialogVisible" :title="isEdit ? t('role.editTitle') : t('role.newTitle')"
-           width="560px" :close-on-click-modal="false">
-  <el-form label-width="90px">
-    <el-form-item :label="t('role.name')">
-      <el-input v-model="form.name" :placeholder="t('role.nameReq')" />
-    </el-form-item>
-    <el-form-item :label="t('role.description')">
-      <el-input v-model="form.description" />
-    </el-form-item>
-    <el-form-item :label="t('role.permissions')">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <el-checkbox v-for="p in allPerms" :key="p.key" v-model="form.permissions" :label="p.key">
-          {{ p.label }}
-        </el-checkbox>
-      </div>
-    </el-form-item>
-  </el-form>
+           width="620px" :close-on-click-modal="false">
+  <el-tabs v-model="activeTab">
+    <el-tab-pane label="基本設定" name="basic">
+      <el-form label-width="90px">
+        <el-form-item :label="t('role.permissions')">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <el-checkbox v-for="p in allPerms" :key="p.key" v-model="form.permissions" :label="p.key">
+              {{ p.label }}
+            </el-checkbox>
+          </div>
+        </el-form-item>
+      </el-form>
+    </el-tab-pane>
+    <el-tab-pane label="繁體中文" name="zhTW">
+      <el-form label-width="90px">
+        <el-form-item :label="t('role.name')">
+          <el-input v-model="form.name" :placeholder="t('role.nameReq')" />
+        </el-form-item>
+        <el-form-item :label="t('role.description')">
+          <el-input v-model="form.description" />
+        </el-form-item>
+      </el-form>
+    </el-tab-pane>
+    <el-tab-pane label="English" name="en">
+      <el-form label-width="90px">
+        <el-form-item :label="t('role.name')"><el-input v-model="form.nameEn" /></el-form-item>
+        <el-form-item :label="t('role.description')"><el-input v-model="form.descriptionEn" /></el-form-item>
+      </el-form>
+    </el-tab-pane>
+    <el-tab-pane label="日本語" name="ja">
+      <el-form label-width="90px">
+        <el-form-item :label="t('role.name')"><el-input v-model="form.nameJa" /></el-form-item>
+        <el-form-item :label="t('role.description')"><el-input v-model="form.descriptionJa" /></el-form-item>
+      </el-form>
+    </el-tab-pane>
+    <el-tab-pane label="简体中文" name="zhCN">
+      <el-form label-width="90px">
+        <el-form-item :label="t('role.name')"><el-input v-model="form.nameZhCn" /></el-form-item>
+        <el-form-item :label="t('role.description')"><el-input v-model="form.descriptionZhCn" /></el-form-item>
+      </el-form>
+    </el-tab-pane>
+    <el-tab-pane label="ภาษาไทย" name="th">
+      <el-form label-width="90px">
+        <el-form-item :label="t('role.name')"><el-input v-model="form.nameTh" /></el-form-item>
+        <el-form-item :label="t('role.description')"><el-input v-model="form.descriptionTh" /></el-form-item>
+      </el-form>
+    </el-tab-pane>
+    <el-tab-pane label="한국어" name="ko">
+      <el-form label-width="90px">
+        <el-form-item :label="t('role.name')"><el-input v-model="form.nameKo" /></el-form-item>
+        <el-form-item :label="t('role.description')"><el-input v-model="form.descriptionKo" /></el-form-item>
+      </el-form>
+    </el-tab-pane>
+    <el-tab-pane label="Tiếng Việt" name="vi">
+      <el-form label-width="90px">
+        <el-form-item :label="t('role.name')"><el-input v-model="form.nameVi" /></el-form-item>
+        <el-form-item :label="t('role.description')"><el-input v-model="form.descriptionVi" /></el-form-item>
+      </el-form>
+    </el-tab-pane>
+    <el-tab-pane label="Bahasa Melayu" name="ms">
+      <el-form label-width="90px">
+        <el-form-item :label="t('role.name')"><el-input v-model="form.nameMs" /></el-form-item>
+        <el-form-item :label="t('role.description')"><el-input v-model="form.descriptionMs" /></el-form-item>
+      </el-form>
+    </el-tab-pane>
+  </el-tabs>
   <template #footer>
     <button class="btn-outline" @@click="dialogVisible=false">{{ t('common.cancel') }}</button>
     <button class="btn-primary" style="margin-left:8px" @@click="submitForm" :disabled="saving">
@@ -75,7 +125,12 @@ createApp({
     const dialogVisible = ref(false);
     const isEdit   = ref(false);
     const editId   = ref(null);
-    const form     = reactive({ name: '', description: '', permissions: [] });
+    const activeTab = ref('basic');
+    const form     = reactive({
+      name: '', description: '', permissions: [],
+      nameEn: '', nameJa: '', nameZhCn: '', nameTh: '', nameKo: '', nameVi: '', nameMs: '',
+      descriptionEn: '', descriptionJa: '', descriptionZhCn: '', descriptionTh: '', descriptionKo: '', descriptionVi: '', descriptionMs: '',
+    });
 
     const allPerms = computed(() => [
       { key: 'dashboard',     label: common.t('role.permissionDashboard')     },
@@ -99,15 +154,41 @@ createApp({
       finally { loading.value = false; }
     }
 
+    function localRoleName(row) {
+      const map = {
+        'en': row.nameEn, 'ja': row.nameJa, 'zh-CN': row.nameZhCn,
+        'th': row.nameTh, 'ko': row.nameKo, 'vi': row.nameVi, 'ms': row.nameMs
+      };
+      return map[locale.value] || row.name;
+    }
+    function localRoleDesc(row) {
+      const map = {
+        'en': row.descriptionEn, 'ja': row.descriptionJa, 'zh-CN': row.descriptionZhCn,
+        'th': row.descriptionTh, 'ko': row.descriptionKo, 'vi': row.descriptionVi, 'ms': row.descriptionMs
+      };
+      return map[locale.value] || row.description;
+    }
+
     function openCreate() {
-      isEdit.value = false; editId.value = null;
-      Object.assign(form, { name: '', description: '', permissions: [] });
+      isEdit.value = false; editId.value = null; activeTab.value = 'basic';
+      Object.assign(form, {
+        name: '', description: '', permissions: [],
+        nameEn: '', nameJa: '', nameZhCn: '', nameTh: '', nameKo: '', nameVi: '', nameMs: '',
+        descriptionEn: '', descriptionJa: '', descriptionZhCn: '', descriptionTh: '', descriptionKo: '', descriptionVi: '', descriptionMs: '',
+      });
       dialogVisible.value = true;
     }
 
     function openEdit(row) {
-      isEdit.value = true; editId.value = row.id;
-      Object.assign(form, { name: row.name, description: row.description, permissions: [...row.permissions] });
+      isEdit.value = true; editId.value = row.id; activeTab.value = 'basic';
+      Object.assign(form, {
+        name: row.name, description: row.description, permissions: [...row.permissions],
+        nameEn: row.nameEn || '', nameJa: row.nameJa || '', nameZhCn: row.nameZhCn || '',
+        nameTh: row.nameTh || '', nameKo: row.nameKo || '', nameVi: row.nameVi || '', nameMs: row.nameMs || '',
+        descriptionEn: row.descriptionEn || '', descriptionJa: row.descriptionJa || '',
+        descriptionZhCn: row.descriptionZhCn || '', descriptionTh: row.descriptionTh || '',
+        descriptionKo: row.descriptionKo || '', descriptionVi: row.descriptionVi || '', descriptionMs: row.descriptionMs || '',
+      });
       dialogVisible.value = true;
     }
 
@@ -134,8 +215,8 @@ createApp({
 
     onMounted(async () => { await common.requirePermission('roles'); await loadData(); });
 
-    return { ...common, loading, saving, roles, dialogVisible, isEdit, form, allPerms, permLabel,
-             openCreate, openEdit, submitForm, doDelete };
+    return { ...common, loading, saving, roles, dialogVisible, isEdit, activeTab, form, allPerms, permLabel,
+             openCreate, openEdit, submitForm, doDelete, localRoleName, localRoleDesc };
   }
 }).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
 </script>

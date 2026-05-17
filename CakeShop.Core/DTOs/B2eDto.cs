@@ -34,6 +34,20 @@ public class B2eRoleDto
     public string   Name        { get; set; } = string.Empty;
     public string   Description { get; set; } = string.Empty;
     public string[] Permissions { get; set; } = [];
+    public string NameEn      { get; set; } = string.Empty;
+    public string NameJa      { get; set; } = string.Empty;
+    public string NameZhCn    { get; set; } = string.Empty;
+    public string NameTh      { get; set; } = string.Empty;
+    public string NameKo      { get; set; } = string.Empty;
+    public string NameVi      { get; set; } = string.Empty;
+    public string NameMs      { get; set; } = string.Empty;
+    public string DescriptionEn   { get; set; } = string.Empty;
+    public string DescriptionJa   { get; set; } = string.Empty;
+    public string DescriptionZhCn { get; set; } = string.Empty;
+    public string DescriptionTh   { get; set; } = string.Empty;
+    public string DescriptionKo   { get; set; } = string.Empty;
+    public string DescriptionVi   { get; set; } = string.Empty;
+    public string DescriptionMs   { get; set; } = string.Empty;
 }
 
 public class B2eRoleSaveRequest
@@ -47,6 +61,20 @@ public class B2eRoleSaveRequest
 
     [Required]
     public string[] Permissions { get; set; } = [];
+    public string NameEn      { get; set; } = string.Empty;
+    public string NameJa      { get; set; } = string.Empty;
+    public string NameZhCn    { get; set; } = string.Empty;
+    public string NameTh      { get; set; } = string.Empty;
+    public string NameKo      { get; set; } = string.Empty;
+    public string NameVi      { get; set; } = string.Empty;
+    public string NameMs      { get; set; } = string.Empty;
+    public string DescriptionEn   { get; set; } = string.Empty;
+    public string DescriptionJa   { get; set; } = string.Empty;
+    public string DescriptionZhCn { get; set; } = string.Empty;
+    public string DescriptionTh   { get; set; } = string.Empty;
+    public string DescriptionKo   { get; set; } = string.Empty;
+    public string DescriptionVi   { get; set; } = string.Empty;
+    public string DescriptionMs   { get; set; } = string.Empty;
 }
 
 // ── 後台帳號管理 ──────────────────────────────────────────────────────
@@ -54,6 +82,7 @@ public class B2eAdminDto
 {
     public int      Id                 { get; set; }
     public string   Username           { get; set; } = string.Empty;
+    public string   DisplayName        { get; set; } = string.Empty;
     public string   Email              { get; set; } = string.Empty;
     public int?     RoleId             { get; set; }
     public string   RoleName           { get; set; } = string.Empty;
@@ -71,6 +100,10 @@ public class B2eAdminCreateRequest
     [RegularExpression(@"^[a-zA-Z0-9_\-]+$", ErrorMessage = "帳號只允許英數字、底線、連字號")]
     public string Username { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "使用者名稱為必填")]
+    [MaxLength(100)]
+    public string DisplayName { get; set; } = string.Empty;
+
     [Required(ErrorMessage = "Email 為必填")]
     [RegularExpression(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", ErrorMessage = "Email 格式不正確")]
     [MaxLength(100)]
@@ -81,6 +114,9 @@ public class B2eAdminCreateRequest
 
 public class B2eAdminUpdateRequest
 {
+    [MaxLength(100)]
+    public string DisplayName { get; set; } = string.Empty;
+
     [RegularExpression(@"^$|^[^@\s]+@[^@\s]+\.[^@\s]+$", ErrorMessage = "Email 格式不正確")]
     [MaxLength(100)]
     public string Email { get; set; } = string.Empty;

@@ -277,6 +277,32 @@ await Execute(db, """
 """);
 Console.WriteLine("✔ is_featured 欄位就緒");
 
+// ── Step 2b-3：新增 b2e_roles 多語系欄位 ────────────────────────────
+await Execute(db, """
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS name_en      VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS name_ja      VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS name_zh_cn   VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS name_th      VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS name_ko      VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS name_vi      VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS name_ms      VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS description_en   VARCHAR(500) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS description_ja   VARCHAR(500) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS description_zh_cn VARCHAR(500) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS description_th   VARCHAR(500) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS description_ko   VARCHAR(500) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS description_vi   VARCHAR(500) NOT NULL DEFAULT '';
+    ALTER TABLE b2e_roles ADD COLUMN IF NOT EXISTS description_ms   VARCHAR(500) NOT NULL DEFAULT '';
+""");
+Console.WriteLine("✔ b2e_roles 多語系欄位就緒");
+
+// ── Step 2b-4：新增 b2e_users display_name 欄位 ─────────────────────
+await Execute(db, """
+    ALTER TABLE b2e_users ADD COLUMN IF NOT EXISTS display_name VARCHAR(100) NOT NULL DEFAULT '';
+    UPDATE b2e_users SET display_name = username WHERE display_name = '';
+""");
+Console.WriteLine("✔ b2e_users display_name 欄位就緒");
+
 // ── Step 2c：新增稽核欄位（IF NOT EXISTS，安全重複執行）────────────────
 await Execute(db, """
     ALTER TABLE categories

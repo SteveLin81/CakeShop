@@ -30,13 +30,10 @@
   <!-- Table -->
   <el-table :data="filteredProducts" v-loading="loading" stripe style="width:100%">
     <el-table-column :label="t('product.name')" min-width="160">
-      <template #default="{ row }">
-        <div style="font-weight:600">{{ row.name }}</div>
-        <div style="font-size:.8rem;color:var(--b2e-muted)">{{ row.nameEn }}</div>
-      </template>
+      <template #default="{ row }">{{ localName(row) }}</template>
     </el-table-column>
     <el-table-column :label="t('product.category')" width="100">
-      <template #default="{ row }">{{ row.categoryName }}</template>
+      <template #default="{ row }">{{ localCategoryName(row) }}</template>
     </el-table-column>
     <el-table-column :label="t('product.price')" width="100">
       <template #default="{ row }">NT$ {{ row.price }}</template>
@@ -241,6 +238,22 @@ createApp({
       finally { saving.value = false; }
     }
 
+    function localName(row) {
+      const map = {
+        'en': row.nameEn, 'ja': row.nameJa, 'zh-CN': row.nameZhCn,
+        'th': row.nameTh, 'ko': row.nameKo, 'vi': row.nameVi, 'ms': row.nameMs
+      };
+      return map[locale.value] || row.name;
+    }
+    function localCategoryName(row) {
+      if (!row.category) return '';
+      const map = {
+        'en': row.category.nameEn, 'ja': row.category.nameJa, 'zh-CN': row.category.nameZhCn,
+        'th': row.category.nameTh, 'ko': row.category.nameKo, 'vi': row.category.nameVi, 'ms': row.category.nameMs
+      };
+      return map[locale.value] || row.category.name;
+    }
+
     async function doDelete(id) {
       try {
         await b2eApi.deleteProduct(id);
@@ -255,7 +268,8 @@ createApp({
     });
 
     return { ...common, loading, saving, products, categories, searchText, filterCat, filteredProducts,
-             dialogVisible, isEdit, activeTab, form, openCreate, openEdit, submitForm, doDelete, handleImageUpload, toggleFeatured, formatDate };
+             dialogVisible, isEdit, activeTab, form, openCreate, openEdit, submitForm, doDelete, handleImageUpload, toggleFeatured, formatDate,
+             localName, localCategoryName };
   }
 }).use(b2eI18n).use(ElementPlus).mount('#b2e-app');
 </script>

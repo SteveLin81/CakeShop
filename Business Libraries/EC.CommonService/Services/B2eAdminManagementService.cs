@@ -36,6 +36,7 @@ public class B2eAdminManagementService : IB2eAdminManagementService
         var user = new B2eUser
         {
             Username           = req.Username,
+            DisplayName        = string.IsNullOrEmpty(req.DisplayName) ? req.Username : req.DisplayName,
             Email              = req.Email,
             PasswordHash       = _enc.HashPassword("0000"),
             RoleId             = req.RoleId,
@@ -56,6 +57,7 @@ public class B2eAdminManagementService : IB2eAdminManagementService
             if (all.Any(u => u.Id != id && u.Email.Equals(req.Email, StringComparison.OrdinalIgnoreCase)))
                 throw new InvalidOperationException("此 Email 已被其他帳號使用");
         }
+        existing.DisplayName = string.IsNullOrEmpty(req.DisplayName) ? existing.Username : req.DisplayName;
         existing.Email     = req.Email;
         existing.RoleId    = req.RoleId;
         existing.UpdatedBy = operatorName;
