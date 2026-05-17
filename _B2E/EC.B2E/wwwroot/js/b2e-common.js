@@ -29,9 +29,10 @@ function useB2eCommon() {
   onBeforeUnmount(() => document.removeEventListener('click', closeLangMenu));
 
   // ── Auth ──────────────────────────────────────────────────────────
-  const adminUsername = ref(localStorage.getItem('b2eUsername') || '');
-  const adminRole     = ref(localStorage.getItem('b2eRole')     || '');
-  const permissions   = ref(JSON.parse(localStorage.getItem('b2ePermissions') || '[]'));
+  const adminUsername     = ref(localStorage.getItem('b2eUsername') || '');
+  const adminRole         = ref(localStorage.getItem('b2eRole')     || '');
+  const permissions       = ref(JSON.parse(localStorage.getItem('b2ePermissions') || '[]'));
+  const mustChangePassword = ref(false);
 
   function hasPermission(key) { return permissions.value.includes(key); }
 
@@ -44,19 +45,17 @@ function useB2eCommon() {
       if (!res.success || !res.data) { location.href = '/b2e/login'; return; }
 
       const me = res.data;
-      adminUsername.value = me.username;
-      adminRole.value     = me.roleName;
-      permissions.value   = me.permissions ?? [];
+      adminUsername.value      = me.username;
+      adminRole.value          = me.roleName  || '';
+      permissions.value        = me.permissions ?? [];
+      mustChangePassword.value = me.mustChangePassword === true;
 
       localStorage.setItem('b2eUsername',    me.username);
       localStorage.setItem('b2eRole',        me.roleName || '');
       localStorage.setItem('b2ePermissions', JSON.stringify(me.permissions ?? []));
 
-      if (me.mustChangePassword) {
-        const currentPath = location.pathname;
-        if (currentPath !== '/b2e/admin/change-password') {
-          location.href = '/b2e/admin/change-password';
-        }
+      if (me.mustChangePassword && location.pathname !== '/b2e/admin/change-password') {
+        location.href = '/b2e/admin/change-password';
       }
     } catch {
       location.href = '/b2e/login';
@@ -87,7 +86,7 @@ function useB2eCommon() {
 
   return {
     t, locale, langs, currentLangLabel, setLocale, showLangMenu,
-    adminUsername, adminRole, permissions, hasPermission, checkAuth, logout,
+    adminUsername, adminRole, permissions, mustChangePassword, hasPermission, checkAuth, logout,
     sidebarOpen, toast, toastType, showToast,
   };
 }

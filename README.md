@@ -1131,6 +1131,8 @@ dotnet test _Test/EC.Test
 - [x] B2E 後台帳號管理新增帳號時 Email 改為**必填**：`B2eAdminCreateRequest` 加上 `[Required]`，前端 `Admins.cshtml` 加入 `formErrors` 即時驗證（空值 / 格式錯誤即時紅字提示）；`el-form-item` 加上 `required` 標記與 `placeholder`
 - [x] DbSetup 種子帳號 email 改為實際信箱（`a32132154@gmail.com`）；`users` 與 `b2e_users` 的 INSERT 改用 `ON CONFLICT DO UPDATE SET email` 確保重跑時同步更新
 - [x] Gmail SMTP 密碼更新為應用程式密碼（App Password，需先開啟兩步驟驗證）；忘記密碼發信失敗時改以 `LogError` 輸出完整錯誤並以 `LogWarning` 印出開發用重設連結（fallback for SMTP failure）
+- [x] 修正 B2E 修改密碼頁空白問題：`ChangePassword.cshtml` 原本有獨立 `onMounted` 自行呼叫 `getMe()`，若回應非預期時 redirect 至 login 導致畫面空白；改用與其他管理頁一致的 `common.checkAuth()`，確保**任何角色**（含無角色帳號）均可正常進入變更密碼頁面
+- [x] `b2e-common.js` 新增 `mustChangePassword` reactive ref：`checkAuth()` 成功後統一設定，各管理頁可直接透過 `common.mustChangePassword` 讀取首次登入強制改密碼狀態
 - [ ] 加入 JWT 標準認證中介層
 - [ ] 前端改為 Vue 3 SPA（Vite + Vue Router）
 - [ ] 加入結帳 / 訂單管理功能
